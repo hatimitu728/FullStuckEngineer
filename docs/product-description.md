@@ -13,7 +13,7 @@ That moment — *“What do they actually want from me, and by when?”* — is 
 1. **Gemini reads the email once** and returns one structured result: whether you must reply and why, what the email is, your asks, the exact evidence sentences (E1, E2…), the dates as written, things you can skip, spoken beats, easy-read cards and a polite draft reply.
 2. **Code checks every date.** Our server reads each date as written and computes the real weekday in Japan time. If they do not match, or a reply deadline falls after the event, Jeri shows a Warning Card: *what the email says* and *what our check found*, side by side. Jeri never “fixes” the date and never guesses.
 3. **The same result, three modes, one screen:**
-   - **Listen** — Cloud Text-to-Speech reads the spoken beats. No autoplay. Play, pause, resume, previous, next.
+   - **Listen** — Gemini 3.8 Flash TTS reads the spoken beats in a calm, clear voice. No autoplay. Play, pause, resume, previous, next.
    - **Captions** — the same beats as text, in the same order, with visual warnings. No sound needed.
    - **Easy Read** — large, plain cards, one topic each. Every “not”, condition and exception is kept.
 4. **Draft Dock** — the reply draft stays at the bottom in every mode. You can edit it (which clears approval) and approve it. Approval shows **“Approved — not sent.”** Jeri never sends email.
@@ -24,7 +24,7 @@ Switching modes keeps your email, your place and your draft, and never calls Gem
 
 - Real Gemini analysis with a strict JSON schema; quotes are checked to be exact copies of the email (retry once, otherwise removed and flagged).
 - Date and weekday check in code, tested with unit tests.
-- Real Cloud Text-to-Speech audio per beat.
+- Real Gemini 3.8 Flash TTS audio per beat (Cloud Text-to-Speech as automatic fallback).
 - The three modes and the Draft Dock, on desktop, tablet and mobile.
 - Analysis saved by email ID (Firestore when configured), with a guard so a second request never starts a second Gemini call.
 - Optional: Google sign-in (Firebase Auth) with Gmail read-only, and drafts saved per user in Firestore.

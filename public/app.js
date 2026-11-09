@@ -27,7 +27,7 @@ const L = {
     modesLabel: "How do you want to take it in?", listen: "Listen", captions: "Captions", easyRead: "Easy Read",
     modeHint: "Same facts in every mode. Switching keeps your place and your draft.",
     play: "Play", pause: "Pause", resume: "Resume", prev: "Previous", next: "Next", beatOf: (i, n) => `${i} of ${n}`,
-    audioLoading: "Getting audio from Cloud Text-to-Speech…", audioPaused: (id) => `Paused at ${id}.`, audioPlaying: (id) => `Playing ${id}.`,
+    audioLoading: "Getting audio from Gemini TTS…", audioPaused: (id) => `Paused at ${id}.`, audioPlaying: (id) => `Playing ${id}.`,
     audioDone: "Finished. Press Play to hear it again.", audioIdle: "Audio never plays by itself. Press Play when you are ready.",
     captionsNoSound: "No sound needed. These are exactly the spoken beats, in the same order.",
     original: "Original email", originalNote: "never changed, never deleted", showOriginal: "View original email", hideOriginal: "Hide original email",
@@ -57,7 +57,7 @@ const L = {
     modesLabel: "どの方法で確認しますか？", listen: "Listen（音声）", captions: "Captions（字幕）", easyRead: "Easy Read（やさしい表示）",
     modeHint: "どのモードでも内容は同じです。切り替えても位置と下書きはそのままです。",
     play: "再生", pause: "一時停止", resume: "再開", prev: "前へ", next: "次へ", beatOf: (i, n) => `${i} / ${n}`,
-    audioLoading: "Cloud Text-to-Speechで音声を準備中…", audioPaused: (id) => `${id}で一時停止中。`, audioPlaying: (id) => `${id}を再生中。`,
+    audioLoading: "Gemini TTSで音声を準備中…", audioPaused: (id) => `${id}で一時停止中。`, audioPlaying: (id) => `${id}を再生中。`,
     audioDone: "最後まで再生しました。もう一度聞くには再生を押してください。", audioIdle: "音声は自動で再生されません。準備ができたら再生を押してください。",
     captionsNoSound: "音は不要です。読み上げと同じ文章を同じ順番で表示します。",
     original: "元のメール", originalNote: "変更も削除もしません", showOriginal: "元のメールを表示", hideOriginal: "元のメールを隠す",
@@ -488,9 +488,9 @@ async function ensureClips() {
   if (clips[key]) return clips[key];
   setAudioStatus(t("audioLoading"));
   serverCalls.speak += 1;
-  const { clips: c } = await api("/api/speak", { beats: a.spokenBeats.map((b) => ({ id: b.id, text: b.text })), lang: a.lang, rate: state.rate });
-  clips[key] = c;
-  return c;
+  const r = await api("/api/speak", { beats: a.spokenBeats.map((b) => ({ id: b.id, text: b.text })), lang: a.lang, rate: state.rate });
+  clips[key] = { data: r.clips, mimes: r.mimes || {}, engine: r.engine };
+  return clips[key];
 }
 let playToken = 0;
 async function playBeat(i) {
@@ -501,12 +501,13 @@ async function playBeat(i) {
     const c = await ensureClips();
     if (token !== playToken || state.mode !== "listen") return;
     const b = a.spokenBeats[i];
-    audio.src = `data:audio/mpeg;base64,${c[b.id]}`;
+    audio.src = `data:${c.mimes[b.id] || "audio/mpeg"};base64,${c.data[b.id]}`;
+    audio.dataset.engine = c.engine || "";
     audio.dataset.beat = b.id;
     audio.playbackRate = 1;
     state.isPlaying = true; state.audioKind = "beat"; p.started = true; p.finished = false;
     await audio.play();
-    setAudioStatus(t("audioPlaying", b.id));
+    setAudioStatus(`${t("audioPlaying", b.id)}${c.engine ? " · " + c.engine : ""}`);
   } catch (err) {
     if (token !== playToken) return;
     state.isPlaying = false; state.audioKind = null;
@@ -637,8 +638,8 @@ btnListenDraft.addEventListener("click", async () => {
   try {
     btnListenDraft.disabled = true;
     serverCalls.speak += 1;
-    const { clips: c } = await api("/api/speak", { beats: [{ id: "DRAFT", text }], lang: currentEmail()?.lang === "ja" ? "ja" : "en", rate: state.rate });
-    audio.src = `data:audio/mpeg;base64,${c.DRAFT}`;
+    const r = await api("/api/speak", { beats: [{ id: "DRAFT", text }], lang: currentEmail()?.lang === "ja" ? "ja" : "en", rate: state.rate });
+    audio.src = `data:${r.mimes?.DRAFT || "audio/mpeg"};base64,${r.clips.DRAFT}`;
     delete audio.dataset.beat;
     state.isPlaying = true; state.audioKind = "draft";
     await audio.play();

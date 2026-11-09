@@ -3,7 +3,7 @@ name: Deploy Jeri to Cloud Run
 #   GCP_SA_KEY      – JSON key of a service account with roles: Cloud Run Admin, Cloud Build Editor,
 #                     Artifact Registry Admin, Service Account User, Storage Admin, Service Usage Consumer
 #   GCP_PROJECT_ID  – Google Cloud project id
-#   GEMINI_API_KEY  – API key with Generative Language API + Cloud Text-to-Speech API enabled
+#   GEMINI_API_KEY  – Gemini API key (analysis + Gemini 3.8 Flash TTS; enable Cloud Text-to-Speech too for the fallback voice)
 # Optional (public Firebase web config, enables Google sign-in + Gmail read-only):
 #   FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_APP_ID
 on:

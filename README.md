@@ -21,7 +21,7 @@ Jeri is for **people who cannot skim**: dyslexic, blind or low-vision, and Deaf 
 4. **One shared result, three modes on one screen:**
    | Mode | What you get |
    |---|---|
-   | Listen | Cloud Text-to-Speech reads the spoken beats (one clip per beat). No autoplay. Play, pause, resume, previous, next. Current sentence highlighted. |
+   | Listen | Gemini 3.8 Flash TTS reads the spoken beats (one clip per beat; Cloud TTS fallback). No autoplay. Play, pause, resume, previous, next. Current sentence highlighted. |
    | Captions | Exactly the same beats, same order, no sound needed. Warnings shown with icon + the word “Warning”. |
    | Easy Read | Large plain cards: What · Ask · When · Risk · Skip · Next. Every “NOT” kept. |
 5. **Draft Dock**: always at the bottom. Edit clears approval. Switching modes keeps it. Approve shows **“Approved — not sent”**. Jeri never sends email.
@@ -35,7 +35,8 @@ On the Northbridge demo Jeri catches: the buried ask (confirm the 30-minute Goog
 | Tech | Why |
 |---|---|
 | **Gemini API** (JSON mode + `responseSchema`) | Reads the email once and finds asks, evidence and junk for three kinds of readers. Retries once on bad JSON or non-exact quotes. |
-| **Cloud Text-to-Speech** | Speaks the beats with standard stock voices (en-US / ja-JP). One clip per beat so Captions can stop audio and keep the position. |
+| **Gemini 3.8 Flash TTS** (Gemini API) | Speaks the beats with a prebuilt stock voice; language (English/Japanese) is detected automatically, and a calm, clear speaking style is set per request. One clip per beat so Captions can stop audio and keep the position. Same key as the analysis. |
+| **Cloud Text-to-Speech** (fallback) | Standard voices (en-US / ja-JP) used automatically if Gemini TTS is unavailable. |
 | **Firebase Authentication** | Google sign-in with the `gmail.readonly` scope (optional extra). |
 | **Cloud Firestore** | Saves each analysis by email ID (analyse once), and each signed-in user’s draft and approval. |
 | **Gmail API** | Read-only inbox list for the sidebar (optional extra, test inbox with fictional emails only). |
@@ -44,7 +45,7 @@ On the Northbridge demo Jeri catches: the buried ask (confirm the 30-minute Goog
 ## How to run
 
 ```bash
-cp .env.example .env      # add GEMINI_API_KEY (Generative Language API + Cloud Text-to-Speech API enabled)
+cp .env.example .env      # add GEMINI_API_KEY (Gemini API key; also used for Gemini TTS)
 npm install
 npm run dev               # http://localhost:8080
 npm test                  # date check + post-processing unit tests

@@ -31,7 +31,7 @@ if (MOCK) {
   const wav = toneWavBase64();
   await page.route("**/api/speak", async (route) => {
     const { beats } = route.request().postDataJSON();
-    await route.fulfill({ json: { clips: Object.fromEntries(beats.map((b) => [b.id, wav])), format: "audio/wav", mocked: true } });
+    await route.fulfill({ json: { clips: Object.fromEntries(beats.map((b) => [b.id, wav])), mimes: Object.fromEntries(beats.map((b) => [b.id, "audio/wav"])), engine: "MOCK", mocked: true } });
   });
 }
 const S = () => page.evaluate(() => window.__jeri.state);
@@ -74,7 +74,7 @@ try {
   await page.waitForTimeout(400);
   const resumed = await audioState();
   const realAudio = speakResp?.ok() && !speakJson.mocked && Object.keys(speakJson.clips || {}).length >= 5;
-  check(`3. Listen plays ${MOCK ? "MOCKED" : "real Cloud TTS"} audio; play, pause, resume work`,
+  check(`3. Listen plays ${MOCK ? "MOCKED" : "real TTS (" + (speakJson.engine || "?") + ")"} audio; play, pause, resume work`,
     noAutoplay && speakBefore === 0 && (MOCK || realAudio) && !playing.paused && paused.paused && /Resume/.test(label) && !resumed.paused && resumed.beat === paused.beat && resumed.t >= paused.t,
     `noAutoplay=${noAutoplay} clips=${Object.keys(speakJson.clips || {}).length} playing=${!playing.paused} paused=${paused.paused} label="${label}" resumedSameBeat=${resumed.beat === paused.beat}`);
 

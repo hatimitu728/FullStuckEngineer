@@ -51,7 +51,7 @@ async function callModel(model, contents, { signal }) {
   const body = await res.text();
   if (!res.ok) {
     let msg = body;
-    try { msg = JSON.parse(body).error?.message || body; } catch {}
+    try { const j = JSON.parse(body); msg = (Array.isArray(j) ? j[0] : j)?.error?.message || body; } catch {}
     throw new GeminiError(`Gemini ${model} returned ${res.status}: ${msg.slice(0, 300)}`, { status: res.status === 404 ? 404 : 502 });
   }
   const json = JSON.parse(body);

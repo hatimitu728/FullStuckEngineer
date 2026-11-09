@@ -9,7 +9,7 @@ Status as of the build on Tue 10 Nov 2026. “Human” = still needs a person on
 |---|---|---|
 | Northbridge → **real** Gemini returns the JSON | ⏳ waiting for the API key | Stub run correctly reports FAIL (source=stub). |
 | Warning cards: both weekday mismatches + late deadline, checked in code | ✅ | 2 × wrong_weekday, 1 × deadline_after_event |
-| Listen plays **real** Cloud TTS; play, pause, resume | ⏳ key | UI mechanics pass with test audio; real TTS run pending the key. |
+| Listen plays **real** TTS (Gemini 3.8 Flash TTS, Cloud TTS fallback); play, pause, resume | ⏳ key | UI mechanics pass with test audio; real TTS run pending the key. |
 | Captions stops audio, same beat; Easy Read same facts | ✅ | |
 | Draft Dock: edit clears approval; mode switch keeps it; “Approved — not sent” | ✅ | |
 | Mode switch makes zero server calls | ✅ | |

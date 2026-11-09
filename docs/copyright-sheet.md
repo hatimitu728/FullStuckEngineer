@@ -8,7 +8,8 @@ Team: FullStuckEngineer · Repository licence: MIT (our own code)
 | 2 | ライブラリ Library | @google-cloud/firestore | Saving analyses in Firestore | Apache-2.0 | https://github.com/googleapis/nodejs-firestore |
 | 3 | ライブラリ Library | Firebase JS SDK 10.14.1 (Auth, Firestore) | Google sign-in, drafts per user | Apache-2.0 | https://github.com/firebase/firebase-js-sdk |
 | 4 | API | Gemini API (Google AI) | Email analysis | Gemini API Terms of Service | https://ai.google.dev/gemini-api/terms |
-| 5 | API / 音声 Voice | Cloud Text-to-Speech, standard stock voices (en-US-Standard-C, ja-JP-Standard-A) | Listen mode audio | Google Cloud Terms of Service | https://cloud.google.com/terms |
+| 5 | API / 音声 Voice | Gemini 3.8 Flash TTS, prebuilt voice “Sulafat” (no custom voices) | Listen mode audio | Gemini API Terms of Service | https://ai.google.dev/gemini-api/terms |
+| 5b | API / 音声 Voice | Cloud Text-to-Speech, standard voices (en-US-Standard-C, ja-JP-Standard-A) — fallback only | Listen mode audio (fallback) | Google Cloud Terms of Service | https://cloud.google.com/terms |
 | 6 | API | Gmail API (gmail.readonly) | Optional read-only inbox | Google APIs Terms of Service | https://developers.google.com/terms |
 | 7 | フォント Font | Inter (Google Fonts) | English UI text | SIL Open Font License 1.1 | https://fonts.google.com/specimen/Inter |
 | 8 | フォント Font | BIZ UDPGothic (Google Fonts, Morisawa) | Japanese UI text | SIL Open Font License 1.1 | https://fonts.google.com/specimen/BIZ+UDPGothic |

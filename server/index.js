@@ -136,8 +136,8 @@ app.post("/api/speak", async (req, res) => {
     if (limited(req.ip, "speak", Number(process.env.SPEAK_LIMIT_PER_HOUR || 400))) {
       return res.status(429).json({ error: "Too many audio requests. Please wait a while." });
     }
-    const clips = await speakBeats(clean, { lang: lang === "ja" ? "ja" : "en", rate });
-    res.json({ clips, format: "audio/mpeg" });
+    const { clips, mimes, engine } = await speakBeats(clean, { lang: lang === "ja" ? "ja" : "en", rate });
+    res.json({ clips, mimes, engine });
   } catch (err) {
     console.error("[speak]", err.message);
     res.status(err instanceof TtsError ? 502 : 500).json({ error: "Audio is not available right now. You can use Captions or Easy Read.", detail: err.message });
