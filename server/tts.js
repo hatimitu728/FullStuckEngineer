@@ -4,10 +4,10 @@
 // TTS_ENGINE = "gemini" (default, falls back to Cloud TTS on error) | "cloud" | "gemini-only"
 import { createHash } from "node:crypto";
 
-const GEMINI_TTS_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
+const GEMINI_TTS_URL = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/interactions";
 const GEMINI_TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts";
 const GEMINI_VOICE = process.env.GEMINI_TTS_VOICE || "Sulafat"; // prebuilt voice ("Warm"); language is auto-detected
-const CLOUD_TTS_URL = "https://texttospeech.googleapis.com/v1/text:synthesize";
+const CLOUD_TTS_URL = (process.env.CLOUD_TTS_BASE || "https://texttospeech.googleapis.com") + "/v1/text:synthesize";
 const CLOUD_VOICES = {
   en: { languageCode: "en-US", name: "en-US-Standard-C" },
   ja: { languageCode: "ja-JP", name: "ja-JP-Standard-A" },
