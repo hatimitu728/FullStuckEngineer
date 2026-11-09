@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jeri – find the ask, choose your next step</title>
+  <meta name="description" content="Jeri reads one email once and gives you the same facts three ways: Listen, Captions and Easy Read. For people who cannot skim.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23202124'/%3E%3Ctext x='16' y='23' font-family='Arial' font-size='20' font-weight='700' fill='white' text-anchor='middle'%3EJ%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to the email</a>
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">J</span>
+      <span class="brand-name">Jeri</span>
+      <span class="brand-tag" data-i18n="tagline">for people who cannot skim</span>
+    </div>
+    <div class="header-tools">
+      <button type="button" id="ui-lang" class="btn btn-tertiary" lang="ja" aria-label="日本語の表示に切り替え">日本語</button>
+      <label class="rate-label"><span data-i18n="speed">Voice speed</span>
+        <select id="rate">
+          <option value="0.8" data-i18n="slower">Slower</option>
+          <option value="1" selected data-i18n="normal">Normal</option>
+          <option value="1.2" data-i18n="faster">Faster</option>
+        </select>
+      </label>
+      <button type="button" id="signin" class="btn btn-secondary" hidden data-i18n="signin">Sign in with Google</button>
+      <span id="account" class="account" hidden></span>
+    </div>
+  </header>
+
+  <div id="stub-banner" class="banner banner-critical" role="note" hidden>
+    <strong>STUB DATA.</strong> This server runs without a Gemini key. Results are the team's sample file, not real Gemini output.
+  </div>
+
+  <div class="layout">
+    <nav class="inbox" aria-labelledby="inbox-h">
+      <div class="inbox-head">
+        <h2 id="inbox-h" data-i18n="inbox">Inbox</h2>
+        <span class="tag tag-neutral" data-i18n="exampleData">EXAMPLE DATA</span>
+      </div>
+      <p class="inbox-note" data-i18n="inboxNote">Fictional emails for the demo.</p>
+      <ul id="email-list" class="email-list"></ul>
+      <button type="button" id="paste-btn" class="btn btn-secondary btn-block" data-i18n="paste">Paste an email</button>
+      <div id="gmail-section" hidden>
+        <h3 class="inbox-sub" data-i18n="gmail">Gmail (read-only)</h3>
+        <ul id="gmail-list" class="email-list"></ul>
+      </div>
+    </nav>
+
+    <main id="main" tabindex="-1">
+      <div id="workspace" class="workspace"></div>
+    </main>
+  </div>
+
+  <section id="dock" class="dock" aria-labelledby="dock-h">
+    <div class="dock-inner">
+      <div class="dock-text">
+        <h2 id="dock-h" class="dock-title"><span data-i18n="draftDock">Reply draft</span> <span class="dock-sub" data-i18n="neverSent">· never sent automatically</span></h2>
+        <p id="draft-preview" class="draft-preview"></p>
+        <label for="draft-editor" class="sr-only" data-i18n="editLabel">Edit the reply draft</label>
+        <textarea id="draft-editor" class="draft-editor" rows="8" hidden></textarea>
+      </div>
+      <div class="dock-actions">
+        <button type="button" id="draft-listen" class="btn btn-tertiary" data-i18n="listenDraft">Listen to draft</button>
+        <button type="button" id="draft-edit" class="btn btn-secondary" data-i18n="editDraft">Edit draft</button>
+        <button type="button" id="draft-approve" class="btn btn-primary" data-i18n="approveDraft">Approve draft</button>
+        <p id="approval-status" class="approval-status" role="status"></p>
+      </div>
+    </div>
+  </section>
+
+  <div id="live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <dialog id="paste-dialog" class="dialog" aria-labelledby="paste-h">
+    <form method="dialog" id="paste-form">
+      <h2 id="paste-h" data-i18n="pasteTitle">Paste an email</h2>
+      <p class="hint" data-i18n="pasteHint">Use only fictional or your own test emails. Jeri reads it once with Gemini.</p>
+      <label for="paste-subject" data-i18n="subject">Subject</label>
+      <input id="paste-subject" type="text" autocomplete="off">
+      <label for="paste-text" data-i18n="emailText">Email text</label>
+      <textarea id="paste-text" rows="10" required></textarea>
+      <div class="dialog-actions">
+        <button type="button" id="paste-cancel" class="btn btn-tertiary" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" data-i18n="analyse">Analyse</button>
+      </div>
+    </form>
+  </dialog>
+
+  <audio id="audio" preload="none"></audio>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

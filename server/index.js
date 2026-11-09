@@ -77,7 +77,7 @@ app.get("/api/analysis/:emailId", async (req, res) => {
   if (!email) return res.status(404).json({ error: "Not found" });
   const lang = req.query.lang === "ja" || req.query.lang === "en" ? req.query.lang : email.lang;
   const saved = await getSaved(cacheKey(email, lang));
-  if (!saved) return res.status(404).json({ error: "Not analysed yet" });
+  if (!saved) return res.json({ analysis: null, cached: false });
   res.json({ analysis: saved, cached: true });
 });
 
