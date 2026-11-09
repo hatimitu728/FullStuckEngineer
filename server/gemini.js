@@ -3,7 +3,7 @@ import { responseSchema } from "./schema.js";
 import { badQuotes } from "./postprocess.js";
 
 const PROMPT = readFileSync(new URL("./prompt.md", import.meta.url), "utf8");
-const API = "https://generativelanguage.googleapis.com/v1beta/models";
+const API = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/models";
 const DEFAULT_MODELS = ["gemini-2.5-flash", "gemini-flash-latest"];
 
 export class GeminiError extends Error {
