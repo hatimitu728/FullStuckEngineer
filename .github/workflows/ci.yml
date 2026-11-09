@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm test
+      - run: sh scripts/keyscan.sh
+      - run: npx playwright install --with-deps chromium
+      - name: UI mechanics + accessibility (stub data, mocked audio – not a CORE pass)
+        run: |
+          JERI_STUB=1 PORT=8080 node server/index.js &
+          sleep 2
+          node scripts/core-gate.js http://localhost:8080/ --mock-audio || true
+          node scripts/a11y-check.js http://localhost:8080/
