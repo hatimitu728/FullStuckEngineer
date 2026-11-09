@@ -6,17 +6,14 @@ set -eu
 DEST="${1:?path to the cloned df-2026-t074 repo}"
 [ -d "$DEST/.git" ] || { echo "$DEST is not a git repo. Clone df-2026-t074 first."; exit 1; }
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
-rsync -a --delete \
-  --exclude .git --exclude .env --exclude '.env.*' --include .env.example \
-  --exclude node_modules --exclude dist --exclude build --exclude test-results --exclude playwright-report \
-  --exclude .github/workflows/deploy.yml \
-  "$SRC"/ "$DEST"/
-cp "$SRC/.env.example" "$DEST/.env.example"
+# Copy only files tracked by git (so .env and other untracked files can never be copied).
+find "$DEST" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+(cd "$SRC" && git ls-files -z | grep -zv '^.github/workflows/deploy.yml$' | xargs -0 tar cf -) | (cd "$DEST" && tar xf -)
 cd "$DEST"
 git add -A
 echo "--- git status (must NOT list .env) ---"
 git status --short | head -50
 FAIL=0
 git ls-files | grep -i -E "\.env$|service.?account|credentials|\.pem$" && FAIL=1
-git grep -n -I -E "AIza[0-9A-Za-z_-]{30,}|BEGIN PRIVATE KEY|private_key\"|client_secret\"" -- . ':!scripts/keyscan.sh' && FAIL=1
+git grep -n -I -E "AIza[0-9A-Za-z_-]{30,}|BEGIN PRIVATE KEY|private_key\"|client_secret\"" -- . ':!scripts/keyscan.sh' ':!scripts/prepare-submission.sh' && FAIL=1
 [ "$FAIL" = 0 ] && echo "Key scan clean. Review, then: git commit -m 'Jeri: final submission' && git push" || { echo "KEY SCAN FAILED – do not push"; exit 1; }
