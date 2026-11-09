@@ -424,7 +424,7 @@ function renderModePanel(animate) {
     const kindLabel = { what: "What", ask: "Ask", when: "When", risk: "Risk", skip: "Skip", next: "Next step" };
     panel.append(h("div", { class: "easy-cards" }, (a.easyRead || []).map((c) =>
       h("article", { class: `easy-card k-${c.kind}`, "aria-labelledby": `card-${c.id}` },
-        h("h3", { id: `card-${c.id}` }, c.kind === "risk" ? icon("warning") : null, c.kind === "risk" ? `${t("warning")}: ` : null, c.title,
+        h("h3", { id: `card-${c.id}` }, c.kind === "risk" ? icon("warning") : null, c.kind === "risk" && !/warning|注意/i.test(c.title) ? `${t("warning")}: ` : null, c.title,
           h("span", { class: "kind" }, ` · ${kindLabel[c.kind] || c.kind}`)),
         String(c.body || "").split("\n").filter(Boolean).map((line) => h("p", {}, line)),
         evidenceChips(c.evidenceIds)))));
