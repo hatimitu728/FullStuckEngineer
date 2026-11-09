@@ -1,0 +1,75 @@
+// Analyse once per email: cache by email ID + content hash (memory, plus Firestore when configured)
+// and an in-flight guard so a second request never starts a second Gemini call.
+import { createHash } from "node:crypto";
+
+export const ANALYSIS_VERSION = "v3";
+const memory = new Map();
+const inFlight = new Map();
+let firestore = null;
+let firestoreError = null;
+
+async function db() {
+  const projectId = process.env.FIRESTORE_PROJECT_ID;
+  if (!projectId || firestoreError) return null;
+  if (firestore) return firestore;
+  try {
+    const { Firestore } = await import("@google-cloud/firestore");
+    firestore = new Firestore({ projectId, ignoreUndefinedProperties: true });
+    return firestore;
+  } catch (e) {
+    firestoreError = e;
+    console.warn("[store] Firestore unavailable, using memory only:", e.message);
+    return null;
+  }
+}
+
+export function cacheKey(email, lang) {
+  const h = createHash("sha256").update(email.text).digest("hex").slice(0, 16);
+  return `${email.id}__${lang}__${h}__${ANALYSIS_VERSION}`.replace(/[^\w-]/g, "_");
+}
+
+export async function getSaved(key) {
+  if (memory.has(key)) return memory.get(key);
+  const d = await db();
+  if (!d) return null;
+  try {
+    const snap = await d.collection("analyses").doc(key).get();
+    if (!snap.exists) return null;
+    const a = JSON.parse(snap.data().json);
+    memory.set(key, a);
+    return a;
+  } catch (e) {
+    console.warn("[store] Firestore read failed:", e.message);
+    return null;
+  }
+}
+
+export async function save(key, analysis, { persist = true } = {}) {
+  memory.set(key, analysis);
+  if (!persist) return;
+  const d = await db();
+  if (!d) return;
+  try {
+    // Stored as a JSON string: Firestore does not allow nested arrays (evidence offsets).
+    await d.collection("analyses").doc(key).set({
+      emailId: analysis.emailId,
+      lang: analysis.lang,
+      json: JSON.stringify(analysis),
+      savedAt: new Date(),
+    });
+  } catch (e) {
+    console.warn("[store] Firestore write failed:", e.message);
+  }
+}
+
+/** Run fn once per key at a time; concurrent callers share the same promise. */
+export function once(key, fn) {
+  if (inFlight.has(key)) return { promise: inFlight.get(key), joined: true };
+  const p = (async () => { try { return await fn(); } finally { inFlight.delete(key); } })();
+  inFlight.set(key, p);
+  return { promise: p, joined: false };
+}
+
+export function storeInfo() {
+  return { firestore: Boolean(process.env.FIRESTORE_PROJECT_ID) && !firestoreError, memoryEntries: memory.size };
+}

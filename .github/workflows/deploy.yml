@@ -1,0 +1,41 @@
+name: Deploy Jeri to Cloud Run
+# Manual deploy from the dev repo. Needs these repository secrets:
+#   GCP_SA_KEY      – JSON key of a service account with roles: Cloud Run Admin, Cloud Build Editor,
+#                     Artifact Registry Admin, Service Account User, Storage Admin, Service Usage Consumer
+#   GCP_PROJECT_ID  – Google Cloud project id
+#   GEMINI_API_KEY  – API key with Generative Language API + Cloud Text-to-Speech API enabled
+# Optional (public Firebase web config, enables Google sign-in + Gmail read-only):
+#   FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_APP_ID
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci && npm test
+      - run: sh scripts/keyscan.sh
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Deploy
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+        run: |
+          ENV="GEMINI_API_KEY=${GEMINI_API_KEY},FIRESTORE_PROJECT_ID=${PROJECT_ID}"
+          if [ -n "$FIREBASE_API_KEY" ]; then
+            ENV="$ENV,FIREBASE_API_KEY=$FIREBASE_API_KEY,FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN,FIREBASE_PROJECT_ID=$PROJECT_ID,FIREBASE_APP_ID=$FIREBASE_APP_ID"
+          fi
+          gcloud run deploy jeri --source . --project "$PROJECT_ID" --region asia-northeast1 \
+            --allow-unauthenticated --min-instances 1 --memory 512Mi --set-env-vars "$ENV" --quiet
+          echo "### Live URL" >> $GITHUB_STEP_SUMMARY
+          gcloud run services describe jeri --project "$PROJECT_ID" --region asia-northeast1 --format 'value(status.url)' >> $GITHUB_STEP_SUMMARY

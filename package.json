@@ -5,12 +5,18 @@
   "type": "module",
   "private": true,
   "license": "MIT",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server/index.js",
     "dev": "NODE_USE_ENV_PROXY=1 node --env-file-if-exists=.env server/index.js",
     "test": "node --test test/*.test.js",
     "core": "node scripts/core-gate.js",
     "keyscan": "sh scripts/keyscan.sh"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
+    "express": "^4.21.2"
   }
 }
