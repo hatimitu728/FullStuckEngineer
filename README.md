@@ -61,6 +61,7 @@ Without a key you can run `JERI_STUB=1 npm start`: the screen then shows a red *
 PROJECT_ID=your-project GEMINI_API_KEY=... sh scripts/deploy.sh
 ```
 or run the **Deploy Jeri to Cloud Run** GitHub Action (secrets listed at the top of `.github/workflows/deploy.yml`).
+Step-by-step (credit, key, Cloud Shell deploy): [docs/setup-google-cloud.md](docs/setup-google-cloud.md).
 Optional Firebase sign-in: set `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID` (public web config) and add the live domain to Firebase Auth → Authorized domains. Firestore rules are in `firestore.rules`.
 
 ## Project layout
