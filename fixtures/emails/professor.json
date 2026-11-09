@@ -1,0 +1,9 @@
+{
+  "id": "professor-demo",
+  "from": "Prof. Lena Okafor <okafor@university.example>",
+  "subject": "HCI seminar: report and presentation slot",
+  "receivedAt": "2026-11-09T11:30:00+09:00",
+  "lang": "en",
+  "exampleData": true,
+  "text": "Dear students,\n\nI hope the semester is going well. A short administrative note for the HCI seminar. First, please upload your mid-term report to the course page by Monday, 16 November 2026, 23:59 JST; late reports will only be accepted with a note from the student office. Second, each of you needs to choose a presentation slot. Please reply to this email with your first and second choice from the list on the course page, by Friday, 20 November 2026. The slots are first come, first served. Reading the optional paper by Norman is encouraged but it will not be graded.\n\nBest wishes,\nLena Okafor\n\n[EXAMPLE DATA – fictional professor. This email is not real.]"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "jeri",
+  "version": "1.0.0",
+  "description": "Jeri – one email analysis, three ways to understand it (Listen, Captions, Easy Read). For people who cannot skim.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "NODE_USE_ENV_PROXY=1 node --env-file-if-exists=.env server/index.js",
+    "test": "node --test test/*.test.js",
+    "core": "node scripts/core-gate.js",
+    "keyscan": "sh scripts/keyscan.sh"
+  }
+}

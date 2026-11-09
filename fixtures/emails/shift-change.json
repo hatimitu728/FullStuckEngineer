@@ -1,0 +1,9 @@
+{
+  "id": "shift-change-demo",
+  "from": "Kenji Mori <kenji@corner-cafe.example>",
+  "subject": "Shift swap this week",
+  "receivedAt": "2026-11-09T09:05:00+09:00",
+  "lang": "en",
+  "exampleData": true,
+  "text": "Hi Tinish,\n\nSorry for the short notice. Mika is away this week, so we need to move some shifts around. Could you work the evening shift on Saturday, 15 November 2026, from 17:00 to 22:00 instead of your usual Friday shift? Please let me know by Wednesday, 11 November 2026, 20:00 JST, so I can update the rota. If Saturday does not work, it is fine – just tell me and I will ask someone else. You do not need to bring your uniform; we have spare aprons at the shop.\n\nThanks a lot,\nKenji\nCorner Cafe\n\n[EXAMPLE DATA – fictional cafe. This email is not real.]"
+}

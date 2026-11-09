@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+build/
+*service-account*.json
+*credentials*.json
+*.pem
+test-results/
+playwright-report/
+.DS_Store

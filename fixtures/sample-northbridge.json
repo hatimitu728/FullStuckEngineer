@@ -1,0 +1,46 @@
+{
+  "emailId": "northbridge-demo",
+  "needsReply": { "value": true, "why": "They ask you to confirm an interview time.", "evidenceIds": ["E1"] },
+  "whatItIs": "Internship interview invitation (EXAMPLE DATA)",
+  "summary": "A 30-minute Google Meet interview. Confirm with their form, or suggest two other times. The dates do not match their weekdays.",
+  "evidence": [
+    { "id": "E1", "quote": "Please confirm you can attend by Thursday, 13 November 2026, 17:00 JST, using this form" },
+    { "id": "E2", "quote": "the interview would be 30 minutes on Wednesday, 12 November 2026, at 16:00 JST, over Google Meet." },
+    { "id": "E3", "quote": "If you cannot make that slot, propose two other times that same week in the form." },
+    { "id": "E4", "quote": "you do not need them for the video call itself." },
+    { "id": "E5", "quote": "Those are optional and are not part of the interview decision" }
+  ],
+  "asks": [
+    { "id": "A1", "who": "Aiko, Northbridge", "what": "Confirm you can attend the 30-minute Google Meet, using the form.", "evidenceIds": ["E1", "E2"] },
+    { "id": "A2", "who": "Aiko, Northbridge", "what": "If the time does not work, propose two other times that same week.", "evidenceIds": ["E3"] }
+  ],
+  "dates": [
+    { "id": "D1", "label": "Interview", "kind": "event", "asWritten": "Wednesday, 12 November 2026, at 16:00 JST", "isoDate": "2026-11-12T16:00:00+09:00", "weekdayWritten": "Wednesday", "evidenceIds": ["E2"] },
+    { "id": "D2", "label": "Confirm by", "kind": "deadline", "asWritten": "Thursday, 13 November 2026, 17:00 JST", "isoDate": "2026-11-13T17:00:00+09:00", "weekdayWritten": "Thursday", "evidenceIds": ["E1"] }
+  ],
+  "risks": [],
+  "notStated": [
+    { "field": "meetLink", "value": "not stated / needs checking" },
+    { "field": "interviewerName", "value": "not stated / needs checking" }
+  ],
+  "junk": [
+    { "text": "Newsletter, mailing list, notebook raffle", "why": "Optional. Not part of the interview decision.", "evidenceIds": ["E5"] },
+    { "text": "Residence card details", "why": "You do NOT need them for the video call.", "evidenceIds": ["E4"] }
+  ],
+  "spokenBeats": [
+    { "id": "S1", "kind": "need_reply", "text": "You need to reply.", "evidenceIds": ["E1"] },
+    { "id": "S2", "kind": "what", "text": "This is an interview invitation from Northbridge.", "evidenceIds": ["E2"] },
+    { "id": "S3", "kind": "ask", "text": "They ask you to confirm a 30-minute Google Meet.", "evidenceIds": ["E1"] },
+    { "id": "S4", "kind": "condition", "text": "You do NOT need your residence card for the video call.", "evidenceIds": ["E4"] },
+    { "id": "S5", "kind": "draft", "text": "Here is a draft reply. It is not sent. Please check it.", "evidenceIds": [] }
+  ],
+  "easyRead": [
+    { "id": "C1", "kind": "what", "title": "What is it?", "body": "An invitation to a 30-minute interview on Google Meet.", "evidenceIds": ["E2"] },
+    { "id": "C2", "kind": "ask", "title": "Your ask", "body": "Confirm the interview using their form.", "evidenceIds": ["E1"] },
+    { "id": "C3", "kind": "when", "title": "When?", "body": "Interview: Wednesday, 12 November 2026, at 16:00 JST.\nConfirm by: Thursday, 13 November 2026, 17:00 JST.", "evidenceIds": ["E1", "E2"] },
+    { "id": "C4", "kind": "risk", "title": "Good to know", "body": "You do NOT need your residence card for the video call.", "evidenceIds": ["E4"] },
+    { "id": "C5", "kind": "next", "title": "Next step", "body": "Check the draft. Ask which day they mean. Then approve it.", "evidenceIds": [] }
+  ],
+  "draftReply": "Dear Aiko,\n\nThank you for the invitation. I would be glad to join the 30-minute Google Meet interview.\n\nThe email says Wednesday, 12 November 2026, 16:00 JST. But 12 November 2026 is a Thursday. Could you please confirm the correct day?\n\nI will also confirm using the form.\n\nBest regards,\nTinish",
+  "confidenceNote": ""
+}

@@ -1,0 +1,9 @@
+{
+  "id": "club-notice-demo",
+  "from": "Hiking Club Committee <committee@campus-hiking.example>",
+  "subject": "Hiking Club – November update",
+  "receivedAt": "2026-11-08T21:10:00+09:00",
+  "lang": "en",
+  "exampleData": true,
+  "text": "Hi everyone,\n\nHere is the November update from the Hiking Club committee. Thank you to the 23 members who joined the Mt. Takao walk last Saturday – the photos are now in the shared album. The committee met on Tuesday and agreed to keep the membership fee the same next year. The club room will be closed during the exam period, from Monday, 7 December 2026, while the building is cleaned. There is nothing you need to do right now; we will send sign-up details for the spring trip in January.\n\nHappy walking,\nThe Hiking Club Committee\n\n[EXAMPLE DATA – fictional club. This email is not real.]"
+}
