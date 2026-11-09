@@ -13,6 +13,7 @@
     "dev": "NODE_USE_ENV_PROXY=1 node --env-file-if-exists=.env server/index.js",
     "test": "node --test test/*.test.js",
     "core": "node scripts/core-gate.js",
+    "core:local": "sh scripts/core-local.sh",
     "keyscan": "sh scripts/keyscan.sh"
   },
   "dependencies": {
