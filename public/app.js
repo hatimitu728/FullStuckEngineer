@@ -577,8 +577,8 @@ async function playBeat(i) {
     const ready = clips[`${a.emailId}:${a.lang}:${state.rate}`]?.data[a.spokenBeats[i]?.id];
     if (!ready) { setAudioStatus(t("audioLoading")); $("#btn-play")?.setAttribute("aria-busy", "true"); }
     const c = await getClip(a, i);
+    if (token !== playToken || state.mode !== "listen") return; // switched away: no more audio requests
     getClip(a, i + 1)?.catch(() => {}); // prefetch the next beat
-    if (token !== playToken || state.mode !== "listen") return;
     const b = a.spokenBeats[i];
     audio.src = `data:${c.mime || "audio/mpeg"};base64,${c.data}`;
     audio.dataset.engine = c.engine || "";
