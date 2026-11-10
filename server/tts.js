@@ -3,7 +3,6 @@
 // Fallback: Cloud Text-to-Speech standard voices.
 // TTS_ENGINE = "gemini" (default, falls back to Cloud TTS on error) | "cloud" | "gemini-only"
 import { createHash } from "node:crypto";
-import { getBlob, saveBlob } from "./store.js";
 import { VERTEX, accessToken } from "./googleAuth.js";
 
 const GEMINI_TTS_URL = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/interactions";
@@ -171,6 +170,12 @@ async function synth(text, lang, rate) {
     }
   }
 }
+
+// Where clips are saved: Firestore/disk on Node (server/index.js), KV on Cloudflare (worker/index.js).
+let blobStore = { getBlob: async () => null, saveBlob: async () => {} };
+export function setBlobStore(store) { blobStore = store; }
+const getBlob = (k) => blobStore.getBlob(k);
+const saveBlob = (k, v) => blobStore.saveBlob(k, v);
 
 const inflight = new Map();
 export function clipKey(text, lang, rate) {

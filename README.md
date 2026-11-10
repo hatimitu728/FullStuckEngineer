@@ -56,6 +56,13 @@ node scripts/a11y-check.js http://localhost:8080/   # keyboard, screen-reader st
 
 Without a key you can run `JERI_STUB=1 npm start`: the screen then shows a red **STUB DATA** banner and uses the team’s sample file. It is never used in the demo.
 
+### Deploy (Cloudflare Workers, free) – recommended
+
+```bash
+npm install && npm run deploy:cf
+```
+Step-by-step in Japanese and English: [docs/deploy-cloudflare.md](docs/deploy-cloudflare.md). Uses a free AI Studio Gemini key (stored as a Worker secret) and Workers KV for saved results and voice clips.
+
 ### Deploy (Cloud Run)
 
 ```bash
@@ -74,7 +81,7 @@ Optional Firebase sign-in: set `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIRE
 ## Project layout
 
 ```
-server/      Express server: /api/analyze, /api/speak, prompt.md, schema.js, dateCheck.js, postprocess.js, store.js
+server/      Express server: /api/analyze, /api/speak, prompt.js, schema.js, dateCheck.js, postprocess.js, store.js
 public/      One-screen app (HTML/CSS/JS, no build step), design tokens from the UI guide
 fixtures/    Fictional demo emails + sample-northbridge.json (EXAMPLE DATA)
 test/        Unit tests (node:test)

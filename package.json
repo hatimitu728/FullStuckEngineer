@@ -14,7 +14,9 @@
     "test": "node --test test/*.test.js",
     "core": "node scripts/core-gate.js",
     "core:local": "sh scripts/core-local.sh",
-    "keyscan": "sh scripts/keyscan.sh"
+    "keyscan": "sh scripts/keyscan.sh",
+    "deploy:cf": "node scripts/deploy-cloudflare.mjs",
+    "dev:cf": "wrangler dev"
   },
   "dependencies": {
     "@google-cloud/firestore": "^7.11.0",
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "axe-core": "^4.10.2",
-    "playwright": "^1.63.0"
+    "playwright": "^1.63.0",
+    "wrangler": "^4.45.0"
   }
 }

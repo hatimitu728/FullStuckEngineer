@@ -7,4 +7,3 @@ test-results
 docs
 scripts
 *.md
-!server/prompt.md

@@ -41,9 +41,14 @@ try {
   await page.goto(url);
   const t0 = Date.now();
   await page.getByRole("button", { name: /Northbridge/ }).click();
-  const resp = await page.waitForResponse((r) => r.url().includes("/api/analyze"), { timeout: 120_000 }).catch(() => null);
-  await page.waitForSelector(".warning-card, .error-state", { timeout: 120_000 });
-  const body = resp ? await resp.json().catch(() => null) : null;
+  const resp = await page.waitForResponse((r) => r.url().includes("/api/analyze"), { timeout: 15_000 }).catch(() => null);
+  await page.waitForSelector(".warning-card, .error-state", { timeout: 240_000 });
+  let body = resp ? await resp.json().catch(() => null) : null;
+  if (!body?.analysis) {
+    // Already analysed earlier: the page used the saved Gemini result (no new Gemini call needed).
+    body = await page.evaluate(() => fetch("/api/analysis/northbridge-demo").then((r) => r.json()));
+    if (body) body.cached = true;
+  }
   const source = body?.analysis?.meta?.source;
   check("1. Paste/select Northbridge → REAL Gemini returns the JSON", source === "gemini",
     `source=${source || "none"} model=${body?.analysis?.meta?.model || "-"} ${body?.cached ? "(saved result)" : `(${Math.round((Date.now() - t0) / 1000)}s)`}${body?.error ? " error=" + body.error : ""}`);

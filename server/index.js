@@ -3,8 +3,9 @@ import { readFileSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { analyzeWithGemini, GeminiError } from "./gemini.js";
 import { finalize } from "./postprocess.js";
-import { speakBeats, TtsError } from "./tts.js";
-import { cacheKey, getSaved, save, once, storeInfo } from "./store.js";
+import { speakBeats, TtsError, setBlobStore } from "./tts.js";
+import { cacheKey, getSaved, save, once, storeInfo, getBlob, saveBlob } from "./store.js";
+setBlobStore({ getBlob, saveBlob });
 
 const ROOT = new URL("../", import.meta.url);
 const STUB = process.env.JERI_STUB === "1";

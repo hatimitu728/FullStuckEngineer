@@ -1,9 +1,8 @@
-import { readFileSync } from "node:fs";
 import { responseSchema } from "./schema.js";
 import { badQuotes } from "./postprocess.js";
 import { preScanWeekdays } from "./dateCheck.js";
 
-const PROMPT = readFileSync(new URL("./prompt.md", import.meta.url), "utf8");
+import PROMPT from "./prompt.js";
 import { VERTEX, PROJECT, accessToken } from "./googleAuth.js";
 const API = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/models";
 // Vertex AI (GEMINI_BACKEND=vertex): billed to the Google Cloud project, so Google Cloud credits apply.

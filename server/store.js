@@ -10,7 +10,8 @@ const diskPath = (k) => `${DIR}/${k.replace(/[^\w-]/g, "_")}.json`;
 const diskGet = (k) => { try { return DIR && existsSync(diskPath(k)) ? JSON.parse(readFileSync(diskPath(k), "utf8")) : null; } catch { return null; } };
 const diskSet = (k, v) => { try { if (DIR) writeFileSync(diskPath(k), JSON.stringify(v)); } catch (e) { console.warn("[store] disk write failed:", e.message); } };
 
-export const ANALYSIS_VERSION = "v3";
+import { ANALYSIS_VERSION, cacheKey } from "./keys.js";
+export { ANALYSIS_VERSION, cacheKey };
 const memory = new Map();
 const inFlight = new Map();
 let firestore = null;
@@ -31,10 +32,6 @@ async function db() {
   }
 }
 
-export function cacheKey(email, lang) {
-  const h = createHash("sha256").update(email.text).digest("hex").slice(0, 16);
-  return `${email.id}__${lang}__${h}__${ANALYSIS_VERSION}`.replace(/[^\w-]/g, "_");
-}
 
 export async function getSaved(key) {
   if (memory.has(key)) return memory.get(key);
