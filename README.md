@@ -5,7 +5,7 @@
 Built for DevFest GDGoC Japan Hackathon 2026 · Theme: *“Own the Why, Build with intent.”* · Team FullStuckEngineer
 
 - **Live URL:** **https://jeri-fullstuckengineer.web.app** (Firebase Hosting). The page is served by Firebase Hosting and calls the API server at https://jeri.fullstuckengineer.workers.dev (Gemini analysis, Gemini TTS, saved results). CORE gate and accessibility checks passed on this URL on Tue 10 Nov 2026, 18:26 JST.
-- **Demo email:** “Northbridge” is fictional EXAMPLE DATA. No real inboxes or personal data are used.
+- **Demo email:** “Northbridge” is fictional EXAMPLE DATA. No real inboxes or personal data are used. Details of all five test emails and what each is expected to produce: [docs/test-data.md](docs/test-data.md).
 - **Demo video (3:56, narrated, captioned):** [docs/video/jeri-demo-final.mp4](docs/video/jeri-demo-final.mp4). Made from screen recordings of the live site on 10 Nov 2026. Script, storyboard and edit notes: [docs/video/STORYBOARD.md](docs/video/STORYBOARD.md). Captions: [docs/video/jeri-demo-captions.srt](docs/video/jeri-demo-captions.srt).
 
 ## Why
