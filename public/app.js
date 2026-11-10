@@ -17,6 +17,8 @@ const L = {
     loadingTitle: "Jeri is reading this email once…", loadingBody: "Gemini finds the asks. Then our code checks every date.",
     errorTitle: "Jeri could not analyse this email", retry: "Try again",
     networkError: "The connection to the server was lost before the analysis finished. Please try again.",
+    draftLoading: "The reply draft will appear here when the analysis is ready.", draftAudioLoading: "Preparing audio…",
+    loadError: "Jeri could not load the inbox",
     aiLine: "AI analysis by Gemini, read once and saved.", codeLine: "Dates checked in code.", stubLine: "STUB DATA – not Gemini",
     whatItIs: "What it is", yourAsk: "Your ask", evidence: "Evidence", risks: "Date & condition risks", nextStep: "Next step",
     noAsk: "No ask found. You do not need to do anything.", evidenceFor: "Evidence", showEvidence: (id) => `Show evidence ${id} in the original email`,
@@ -48,6 +50,8 @@ const L = {
     loadingTitle: "Jeriがメールを一度だけ読んでいます…", loadingBody: "Geminiが依頼を見つけ、コードが日付を確認します。",
     errorTitle: "このメールを解析できませんでした", retry: "もう一度試す",
     networkError: "解析が終わる前にサーバーとの接続が切れました。もう一度お試しください。",
+    draftLoading: "解析が終わると、ここに返信の下書きが表示されます。", draftAudioLoading: "音声を準備中…",
+    loadError: "受信トレイを読み込めませんでした",
     aiLine: "Geminiによる解析（一度だけ実行し保存）。", codeLine: "日付はコードで確認。", stubLine: "スタブデータ（Geminiではありません）",
     whatItIs: "何のメール？", yourAsk: "あなたへの依頼", evidence: "根拠", risks: "日付・条件のリスク", nextStep: "次の行動",
     noAsk: "依頼は見つかりませんでした。対応は必要ありません。", evidenceFor: "根拠", showEvidence: (id) => `根拠${id}を原文で表示`,
@@ -104,6 +108,40 @@ function h(tag, props = {}, ...children) {
   return el;
 }
 const icon = (name) => h("span", { html: ICON[name], class: "icon", "aria-hidden": "true", style: "display:inline-flex" });
+
+/* ---------- Skeleton placeholders ----------
+   Decorative shapes that match the content they stand in for. They are aria-hidden;
+   the loading status itself is announced as text (role="status").
+   They appear only if the wait lasts longer than SKELETON_DELAY, so fast responses never flash. */
+const SKELETON_DELAY = 250;
+const sk = (cls, style) => h("span", { class: `sk ${cls}`, style: style || null });
+const skLines = (...widths) => widths.map((w) => sk("sk-line", `width:${w}`));
+function revealLater(el) {
+  setTimeout(() => { if (el.isConnected) el.classList.add("is-visible"); }, SKELETON_DELAY);
+  return el;
+}
+function inboxSkeleton(rows = 5) {
+  return Array.from({ length: rows }, () => h("li", { class: "email-item sk-item", "aria-hidden": "true" },
+    sk("sk-line", "width:45%;height:18px"), sk("sk-line", "width:90%"), sk("sk-line", "width:60%"),
+    h("span", { class: "email-meta" }, sk("sk-line", "width:72px;height:12px"), sk("sk-pill"))));
+}
+function analysisSkeleton() {
+  const row = (n, label, ...body) => h("div", { class: "info-row" },
+    h("div", { class: "info-label" }, h("span", { class: "num" }, String(n)), label),
+    h("div", { class: "info-body" }, ...body));
+  return h("div", { class: "sk-wrap", "aria-hidden": "true" },
+    h("div", { class: "panel info-order" },
+      h("p", { class: "source-line" }, sk("sk-pill", "width:150px"), sk("sk-line", "width:220px"), sk("sk-pill", "width:170px")),
+      row(1, t("whatItIs"), sk("sk-line", "width:55%;height:20px"), ...skLines("92%", "70%")),
+      row(2, t("yourAsk"), sk("sk-line", "width:80%;height:22px"), sk("sk-line", "width:30%"), h("span", { class: "chips" }, sk("sk-chip"), sk("sk-chip"))),
+      row(3, t("evidence"), ...[0, 1, 2].map(() => h("span", { class: "evidence-item" }, sk("sk-chip"), h("span", { class: "sk-stack" }, ...skLines("96%", "64%"))))),
+      row(4, t("risks"), sk("sk-card"), sk("sk-card")),
+      row(5, t("nextStep"), sk("sk-line", "width:60%;height:20px"))),
+    h("div", { class: "panel modes" },
+      h("div", { class: "info-label" }, t("modesLabel")),
+      h("div", { class: "mode-switcher" }, sk("sk-btn"), sk("sk-btn"), sk("sk-btn")),
+      ...skLines("70%", "50%")));
+}
 
 /* ---------- State ---------- */
 const state = {
@@ -203,7 +241,7 @@ async function analyze(id, { force = false } = {}) {
   state.status[id] = "loading";
   delete state.errors[id];
   renderInbox();
-  if (id === state.selectedEmailId) renderWorkspace();
+  if (id === state.selectedEmailId) { renderWorkspace(); renderDock(); }
   try {
     serverCalls.analyze += 1;
     const body = e.source === "demo" ? { emailId: id, force } : { emailId: id, text: e.text, subject: e.subject, from: e.from, lang: e.lang, force };
@@ -283,6 +321,7 @@ function renderWorkspace() {
     return;
   }
   const a = current();
+  ws.removeAttribute("aria-busy");
   const header = h("header", { class: "panel email-header" },
     h("div", { class: "meta" },
       h("span", {}, e.from),
@@ -292,10 +331,13 @@ function renderWorkspace() {
   ws.append(header);
 
   if (state.status[e.id] === "loading" || (!a && !state.errors[e.id])) {
-    ws.append(h("div", { class: "panel", role: "status" },
-      h("p", { class: "lead" }, t("loadingTitle")), h("p", { class: "hint" }, t("loadingBody")),
-      h("div", { class: "skeleton", "aria-hidden": "true" }, h("span"), h("span"), h("span"))));
-    ws.append(originalEmailSection(e, null));
+    ws.setAttribute("aria-busy", "true");
+    // The status text is real content (announced). The shapes below it are decoration.
+    ws.append(revealLater(h("div", { class: "panel loading-status delayed", role: "status" },
+      h("span", { class: "loading-dot", "aria-hidden": "true" }),
+      h("div", {}, h("p", { class: "lead" }, t("loadingTitle")), h("p", { class: "hint" }, t("loadingBody"))))));
+    ws.append(revealLater(h("div", { class: "delayed" }, analysisSkeleton())));
+    ws.append(originalEmailSection(e, null)); // the original is already available: keep it reachable
     return;
   }
   if (state.errors[e.id]) {
@@ -459,6 +501,7 @@ function renderModePanel(animate) {
 function syncBeat() {
   const a = current();
   if (!a) return;
+  $("#btn-play")?.removeAttribute("aria-busy");
   const beats = a.spokenBeats || [];
   const p = per();
   const i = Math.min(p.currentBeatIndex, Math.max(0, beats.length - 1));
@@ -532,7 +575,7 @@ async function playBeat(i) {
   const p = per();
   try {
     const ready = clips[`${a.emailId}:${a.lang}:${state.rate}`]?.data[a.spokenBeats[i]?.id];
-    if (!ready) setAudioStatus(t("audioLoading"));
+    if (!ready) { setAudioStatus(t("audioLoading")); $("#btn-play")?.setAttribute("aria-busy", "true"); }
     const c = await getClip(a, i);
     getClip(a, i + 1)?.catch(() => {}); // prefetch the next beat
     if (token !== playToken || state.mode !== "listen") return;
@@ -606,12 +649,19 @@ function renderDock() {
   const has = Boolean(a);
   dock.classList.toggle("is-empty", !has);
   if (!has) {
-    preview.textContent = t("noDraft");
+    const waiting = state.selectedEmailId && state.status[state.selectedEmailId] === "loading";
+    dock.setAttribute("aria-busy", String(Boolean(waiting)));
+    if (waiting) {
+      preview.replaceChildren(
+        h("span", { class: "sr-only" }, t("draftLoading")),
+        revealLater(h("span", { class: "sk-stack delayed", "aria-hidden": "true" }, ...skLines("82%", "58%"))));
+    } else preview.textContent = t("noDraft");
     editor.hidden = true; preview.hidden = false;
     statusEl.replaceChildren();
     statusEl.classList.remove("is-approved");
     return;
   }
+  dock.setAttribute("aria-busy", "false");
   const p = per();
   const lang = currentEmail()?.lang || "en";
   preview.lang = lang; editor.lang = lang;
@@ -673,6 +723,7 @@ btnListenDraft.addEventListener("click", async () => {
   const text = per().draftText;
   try {
     btnListenDraft.disabled = true;
+    btnListenDraft.textContent = t("draftAudioLoading");
     serverCalls.speak += 1;
     const r = await api("/api/speak", { beats: [{ id: "DRAFT", text }], lang: currentEmail()?.lang === "ja" ? "ja" : "en", rate: state.rate });
     audio.src = `data:${r.mimes?.DRAFT || "audio/mpeg"};base64,${r.clips.DRAFT}`;
@@ -775,11 +826,16 @@ async function boot() {
   applyUiLang();
   renderWorkspace();
   renderDock();
+  const list = $("#email-list");
+  list.setAttribute("aria-busy", "true");
+  const inboxTimer = setTimeout(() => { if (!state.emails.length) list.replaceChildren(...inboxSkeleton()); }, SKELETON_DELAY);
   try {
     state.config = await api("/api/config");
     $("#stub-banner").hidden = !state.config.stub;
     const demo = await api("/api/emails");
     state.emails = demo.map((e) => ({ ...e, source: "demo" }));
+    clearTimeout(inboxTimer);
+    list.setAttribute("aria-busy", "false");
     renderInbox();
     // Badges from saved analyses only (no Gemini call).
     await Promise.all(state.emails.map(async (e) => {
@@ -793,7 +849,12 @@ async function boot() {
     renderInbox();
     if (state.config.firebase) initFirebase(state.config.firebase);
   } catch (e) {
-    $("#workspace").replaceChildren(h("div", { class: "panel error-state", role: "alert" }, h("h1", {}, t("errorTitle")), h("p", {}, e.message)));
+    clearTimeout(inboxTimer);
+    list.setAttribute("aria-busy", "false");
+    list.replaceChildren();
+    $("#workspace").replaceChildren(h("div", { class: "panel error-state", role: "alert" },
+      h("h1", {}, t("loadError")), h("p", {}, e.message),
+      h("button", { type: "button", class: "btn btn-primary", onclick: () => location.reload() }, t("retry"))));
   }
 }
 boot();
