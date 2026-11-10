@@ -16,6 +16,7 @@ const L = {
     chooseTitle: "Choose an email", chooseBody: "Pick an email from the inbox. Jeri reads it once and shows the ask, the evidence and any date problems.",
     loadingTitle: "Jeri is reading this email once…", loadingBody: "Gemini finds the asks. Then our code checks every date.",
     errorTitle: "Jeri could not analyse this email", retry: "Try again",
+    networkError: "The connection to the server was lost before the analysis finished. Please try again.",
     aiLine: "AI analysis by Gemini, read once and saved.", codeLine: "Dates checked in code.", stubLine: "STUB DATA – not Gemini",
     whatItIs: "What it is", yourAsk: "Your ask", evidence: "Evidence", risks: "Date & condition risks", nextStep: "Next step",
     noAsk: "No ask found. You do not need to do anything.", evidenceFor: "Evidence", showEvidence: (id) => `Show evidence ${id} in the original email`,
@@ -46,6 +47,7 @@ const L = {
     chooseTitle: "メールを選んでください", chooseBody: "受信トレイからメールを選ぶと、Jeriが一度だけ読み、依頼・根拠・日付の問題を示します。",
     loadingTitle: "Jeriがメールを一度だけ読んでいます…", loadingBody: "Geminiが依頼を見つけ、コードが日付を確認します。",
     errorTitle: "このメールを解析できませんでした", retry: "もう一度試す",
+    networkError: "解析が終わる前にサーバーとの接続が切れました。もう一度お試しください。",
     aiLine: "Geminiによる解析（一度だけ実行し保存）。", codeLine: "日付はコードで確認。", stubLine: "スタブデータ（Geminiではありません）",
     whatItIs: "何のメール？", yourAsk: "あなたへの依頼", evidence: "根拠", risks: "日付・条件のリスク", nextStep: "次の行動",
     noAsk: "依頼は見つかりませんでした。対応は必要ありません。", evidenceFor: "根拠", showEvidence: (id) => `根拠${id}を原文で表示`,
@@ -205,7 +207,17 @@ async function analyze(id, { force = false } = {}) {
   try {
     serverCalls.analyze += 1;
     const body = e.source === "demo" ? { emailId: id, force } : { emailId: id, text: e.text, subject: e.subject, from: e.from, lang: e.lang, force };
-    const { analysis } = await api("/api/analyze", body);
+    let analysis;
+    try {
+      ({ analysis } = await api("/api/analyze", body));
+    } catch (err) {
+      // The connection can drop on a long analysis while the server keeps working and saves the result.
+      // For demo emails, pick the saved result up instead of failing.
+      const dropped = err instanceof TypeError || [502, 503, 504].includes(err.status);
+      if (!(dropped && e.source === "demo")) throw err;
+      analysis = await waitForSaved(id);
+      if (!analysis) throw Object.assign(new Error(t("networkError")), { detail: err.message });
+    }
     state.analyses[id] = analysis;
     state.status[id] = "ready";
     const p = per(id);
@@ -218,6 +230,18 @@ async function analyze(id, { force = false } = {}) {
   }
   renderInbox();
   if (id === state.selectedEmailId) { renderWorkspace(); renderDock(); }
+}
+
+async function waitForSaved(id, maxMs = 180_000) {
+  const until = Date.now() + maxMs;
+  while (Date.now() < until) {
+    await new Promise((r) => setTimeout(r, 4000));
+    try {
+      const { analysis } = await api(`/api/analysis/${encodeURIComponent(id)}`);
+      if (analysis) return analysis;
+    } catch {}
+  }
+  return null;
 }
 
 /* ---------- Workspace ---------- */

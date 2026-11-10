@@ -55,7 +55,7 @@ if [ -n "${FIREBASE_API_KEY:-}" ]; then
   ENV="$ENV,FIREBASE_API_KEY=$FIREBASE_API_KEY,FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN,FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-$PROJECT_ID},FIREBASE_APP_ID=$FIREBASE_APP_ID"
 fi
 gcloud run deploy jeri --source . --region "$REGION" \
-  --allow-unauthenticated --min-instances 1 --max-instances 1 --timeout 600 --memory 512Mi \
+  --allow-unauthenticated --min-instances 1 --max-instances 1 --timeout 600 --memory 1Gi --no-cpu-throttling \
   --set-env-vars "$ENV" --quiet || \
   fail "デプロイに失敗しました / deploy failed." \
     "上のエラーの最後の10行を Claude に貼ってください（APIキーは貼らないでください）。"
