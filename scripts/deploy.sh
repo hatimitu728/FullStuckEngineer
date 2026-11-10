@@ -31,10 +31,19 @@ gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregi
 echo "== 4/6 ビルド用の権限 / build permissions"
 NUM=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 SA="${NUM}-compute@developer.gserviceaccount.com"
+echo "   build service account: $SA"
+GRANTED=0
 for ROLE in roles/run.builder roles/storage.objectViewer roles/artifactregistry.writer roles/logging.logWriter; do
-  gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$SA" --role="$ROLE" \
-    --condition=None --quiet >/dev/null 2>&1 && echo "   ok $ROLE" || echo "   (skip $ROLE)"
+  if gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$SA" --role="$ROLE" \
+      --condition=None --quiet --format=none; then
+    echo "   ok $ROLE"; GRANTED=1
+  else
+    echo "   ⚠ could not grant $ROLE (see message above)"
+  fi
 done
+if [ "$GRANTED" = 1 ]; then
+  echo "   権限の反映を90秒待ちます / waiting 90s for IAM to apply…"; sleep 90
+fi
 
 echo "== 5/6 Firestore データベース"
 gcloud firestore databases create --location="$REGION" --type=firestore-native >/dev/null 2>&1 \
