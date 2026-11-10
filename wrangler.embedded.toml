@@ -9,7 +9,6 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 preview_urls = true
 
-["/api/*"]
 
 # KV (saved analyses + voice clips). Optional: Jeri works without it, but saving clips protects the free voice quota.
 # To add: Cloudflare dashboard → Storage & Databases → KV → Create "JERI_KV" → copy its ID, then uncomment:
