@@ -39,3 +39,23 @@
 | Approve does not send; edit clears approval | Take 2 log: “Approved — not sent” then “Not approved yet”; there is no send code in the app |
 | Gemini analyses once; Gemini TTS is the voice | Live `/api/analysis` result: source gemini (model gemini-3.5-flash-lite); audio engine reported by `/api/speak` |
 | Gmail sign-in is built but not connected | Code exists in `public/firebase.js`; the live site has no Firebase configuration. It has never been tested against a real Firebase project |
+
+## 60-second cut for the pitch deck (`jeri-demo-60s.mp4`)
+
+- **Length:** 56 s · 1920×1080 · 30 fps · MP4 (H.264 + AAC) with sound and burned-in English captions. Captions file: `jeri-demo-60s-captions.srt`.
+- **Why:** the pitch deck must be a Google Slides file with the demo video inside, and the whole pitch is 4 minutes. The 3:56 video cannot fit, so this cut leaves about 3 minutes for the other slides.
+- **Footage:** the first 6.4 s are from `raw/take1_loading.webm` (the genuine first-time analysis; the 16 s wait is cut to about 3 s and labelled). The rest is `raw/take3_short.webm`, one continuous take recorded on https://jeri-fullstuckengineer.web.app (Firebase Hosting) on 10 Nov 2026.
+- **Narration:** synthetic voice, Gemini TTS (voice “Charon”, model gemini-3.1-flash-tts-preview). App voice: real app audio.
+
+| Time | Narration |
+|---|---|
+| 0:00 | This is Jeri, live, with a fictional email. Gemini reads it once. |
+| 0:06 | It returns your ask, with the exact sentences as evidence. |
+| 0:11 | Code, not the AI, checks the dates. Wednesday the twelfth is really a Thursday, and the deadline falls after the interview. Jeri does not guess. |
+| 0:23 | Listen reads it aloud. |
+| 0:36 | Captions stops the audio, and shows the same sentence. |
+| 0:43 | Easy Read uses plain cards, and keeps every 'not'. |
+| 0:48 | The draft asks which day they mean. Approve means approved, not sent. |
+| 0:28 | *(App voice)* “You need to reply to this email or fill out the form.” … “Aiko Sato invited you to a second-round interview for the Northbridge internship.” (the second sentence is stopped by switching to Captions) |
+
+Not shown in this cut (they are in the 3:56 video): pause/resume, editing the draft clearing the approval, the “how it works” card.

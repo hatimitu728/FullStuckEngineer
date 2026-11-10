@@ -1,0 +1,48 @@
+1
+00:00:00,300 --> 00:00:05,740
+This is Jeri, live, with a fictional email. Gemini reads
+it once.
+
+2
+00:00:06,730 --> 00:00:11,370
+It returns your ask, with the exact sentences as
+evidence.
+
+3
+00:00:11,912 --> 00:00:14,545
+Code, not the AI, checks the dates.
+
+4
+00:00:14,585 --> 00:00:20,451
+Wednesday the twelfth is really a Thursday, and the
+deadline falls after the interview.
+
+5
+00:00:20,491 --> 00:00:22,192
+Jeri does not guess.
+
+6
+00:00:23,433 --> 00:00:26,153
+Listen reads it aloud.
+
+7
+00:00:28,631 --> 00:00:33,351
+[App voice] You need to reply to this email or fill out the form.
+
+8
+00:00:33,465 --> 00:00:36,195
+[App voice] Aiko Sato invited you to a second-round interview for
+the Northbridge internship.
+
+9
+00:00:36,580 --> 00:00:41,220
+Captions stops the audio, and shows the same sentence.
+
+10
+00:00:43,655 --> 00:00:48,215
+Easy Read uses plain cards, and keeps every 'not'.
+
+11
+00:00:48,856 --> 00:00:54,896
+The draft asks which day they mean. Approve means
+approved, not sent.
