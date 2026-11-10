@@ -15,5 +15,5 @@ echo "--- git status (must NOT list .env) ---"
 git status --short | head -50
 FAIL=0
 git ls-files | grep -i -E "\.env$|service.?account|credentials|\.pem$" && FAIL=1
-git grep -n -I -E "AIza[0-9A-Za-z_-]{30,}|BEGIN PRIVATE KEY|private_key\"|client_secret\"" -- . ':!scripts/keyscan.sh' ':!scripts/prepare-submission.sh' && FAIL=1
+git grep -n -I -E "AIza[0-9A-Za-z_-]{30,}|AQ\.[0-9A-Za-z_-]{20,}|BEGIN PRIVATE KEY|private_key\"|client_secret\"" -- . ':!scripts/keyscan.sh' ':!scripts/prepare-submission.sh' && FAIL=1
 [ "$FAIL" = 0 ] && echo "Key scan clean. Review, then: git commit -m 'Jeri: final submission' && git push" || { echo "KEY SCAN FAILED – do not push"; exit 1; }
