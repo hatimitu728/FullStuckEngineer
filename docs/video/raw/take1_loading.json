@@ -1,0 +1,46 @@
+{
+  "name": "take1_loading",
+  "url": "https://jeri.fullstuckengineer.workers.dev/",
+  "cues": [
+    {
+      "id": "open",
+      "t": 1.091
+    },
+    {
+      "id": "click",
+      "t": 5.102
+    },
+    {
+      "id": "skeleton",
+      "t": 7.015
+    },
+    {
+      "id": "result",
+      "t": 20.976
+    }
+  ],
+  "audio": [],
+  "state": {
+    "selectedEmailId": "northbridge-demo",
+    "mode": "listen",
+    "currentBeatIndex": 0,
+    "isPlaying": false,
+    "draftText": "Dear Aiko,\n\nThank you for the second-round interview invitation. Regarding the proposed interview time on Wednesday, 12 November 2026, could you please clarify which day of the week you mean, as there is a mismatch with the calendar? I will submit the form accordingly.\n\nThe email says \"Thursday, 13 November 2026, 17:00 JST\", but 13 November 2026 is a Friday.\nCould you please confirm which day you mean?\n\nBest regards,\nTinish",
+    "approvalState": "none",
+    "serverCalls": {
+      "analyze": 1,
+      "speak": 0
+    }
+  },
+  "errors": [],
+  "badgeBefore": "Not analysed yet",
+  "sawSkeleton": 29,
+  "warningCards": 3,
+  "analyzeResponses": [
+    {
+      "status": 200,
+      "t": 20.908
+    }
+  ],
+  "model": "gemini-3.5-flash-lite"
+}

@@ -1,0 +1,203 @@
+1
+00:00:00,700 --> 00:00:07,179
+Some emails are long, and the one thing they ask of you
+is buried in the middle.
+
+2
+00:00:07,229 --> 00:00:14,376
+If you cannot skim, because of dyslexia, low vision, or
+because you cannot rely on sound,
+
+3
+00:00:14,426 --> 00:00:19,570
+finding that request means reading everything again and
+again.
+
+4
+00:00:20,620 --> 00:00:25,403
+Jeri, by team FullStuckEngineer, does not just
+summarise.
+
+5
+00:00:25,453 --> 00:00:33,880
+It finds what the email asks of you, shows the evidence,
+checks the dates, and leaves the decision to you.
+
+6
+00:00:33,930 --> 00:00:38,490
+This is the live app, using a fictional example email.
+
+7
+00:00:39,340 --> 00:00:44,658
+We open an interview invitation from Northbridge, a
+fictional company.
+
+8
+00:00:44,708 --> 00:00:47,136
+Gemini reads the email once.
+
+9
+00:00:47,186 --> 00:00:51,884
+While it works, the page shows where each answer will
+appear.
+
+10
+00:00:51,934 --> 00:00:55,050
+This wait is real, and shortened here.
+
+11
+00:00:56,414 --> 00:01:00,429
+Here is the result. What the email is. Your ask:
+
+12
+00:01:00,479 --> 00:01:05,945
+confirm the interview, or propose two other times, using
+their form.
+
+13
+00:01:05,995 --> 00:01:11,244
+And below it, the exact sentences from the email that
+support it.
+
+14
+00:01:11,996 --> 00:01:14,570
+Now the part a summary would miss.
+
+15
+00:01:14,620 --> 00:01:17,569
+Our code, not the AI, checks every date.
+
+16
+00:01:17,619 --> 00:01:22,943
+The email says Wednesday the twelfth of November, but
+that date is a Thursday.
+
+17
+00:01:22,993 --> 00:01:29,941
+The deadline is written as Thursday the thirteenth,
+which is a Friday, and it falls after the interview.
+
+18
+00:01:29,991 --> 00:01:32,878
+Jeri does not guess which day is right.
+
+19
+00:01:32,928 --> 00:01:39,626
+It shows what the email says, what the check found, and
+links each warning to the original sentence.
+
+20
+00:01:41,881 --> 00:01:47,611
+There are three ways to take this in, all from the same
+analysis.
+
+21
+00:01:47,661 --> 00:01:53,311
+Listen reads short spoken beats aloud. It never plays by
+itself.
+
+22
+00:01:55,840 --> 00:02:00,550
+[App voice] You need to reply to this email or fill out the form.
+
+23
+00:02:00,675 --> 00:02:06,345
+[App voice] Aiko Sato invited you to a second-round interview for
+the Northbridge internship.
+
+24
+00:02:06,474 --> 00:02:09,431
+[App voice] You are asked to confirm your interview attendance or
+propose two other times using the form by Thursday,
+
+25
+00:02:09,481 --> 00:02:16,586
+[App voice] Warning. The email says Wednesday, 12 November 2026, at
+16:00 JST.
+
+26
+00:02:16,636 --> 00:02:21,711
+[App voice] Our check found that this date is a Thursday.
+
+27
+00:02:21,822 --> 00:02:25,097
+[App voice] Warning. The email says Thursday, 13 November 2026,
+17:00 JST.
+
+28
+00:02:25,801 --> 00:02:27,800
+Switch to Captions.
+
+29
+00:02:27,850 --> 00:02:34,022
+The audio stops, and the same sentence appears as text,
+in the same place.
+
+30
+00:02:34,072 --> 00:02:36,071
+No sound is needed.
+
+31
+00:02:39,104 --> 00:02:44,121
+Easy Read shows large, plain cards, one topic each.
+
+32
+00:02:44,171 --> 00:02:47,643
+Every 'not' is kept. For example:
+
+33
+00:02:47,693 --> 00:02:53,054
+you do not need your residence card for the video call.
+
+34
+00:02:54,105 --> 00:02:59,971
+At the bottom, the Draft Dock holds a reply that asks
+which day they mean,
+
+35
+00:03:00,021 --> 00:03:03,938
+instead of confirming a date that may be wrong.
+
+36
+00:03:03,988 --> 00:03:08,122
+Approve records your decision: approved, not sent.
+
+37
+00:03:08,172 --> 00:03:10,359
+Jeri never sends email.
+
+38
+00:03:10,409 --> 00:03:14,615
+And if you edit the draft, the approval is cleared.
+
+39
+00:03:18,364 --> 00:03:24,055
+Under the hood, Gemini analyses the email once, into a
+structured result.
+
+40
+00:03:24,105 --> 00:03:27,670
+Our code verifies the quotes and the dates.
+
+41
+00:03:27,720 --> 00:03:31,143
+Gemini text to speech provides the voice.
+
+42
+00:03:31,193 --> 00:03:36,176
+Results are saved, so switching modes never calls the AI
+again.
+
+43
+00:03:36,226 --> 00:03:44,114
+Gmail sign-in is built, but not connected in this demo,
+so it uses a built-in inbox of fictional emails.
+
+44
+00:03:45,764 --> 00:03:51,719
+Jeri finds the ask, keeps the meaning, and lets you
+choose the next step.
+
+45
+00:03:51,769 --> 00:03:54,314
+Jeri, by FullStuckEngineer.

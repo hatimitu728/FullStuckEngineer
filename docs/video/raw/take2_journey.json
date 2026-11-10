@@ -1,0 +1,158 @@
+{
+  "name": "take2_journey",
+  "url": "https://jeri.fullstuckengineer.workers.dev/",
+  "cues": [
+    {
+      "id": "N04",
+      "t": 5.811
+    },
+    {
+      "id": "N05",
+      "t": 21.393
+    },
+    {
+      "id": "original",
+      "t": 43.54
+    },
+    {
+      "id": "N06",
+      "t": 51.278
+    },
+    {
+      "id": "play",
+      "t": 63.157
+    },
+    {
+      "id": "captions_click",
+      "t": 93.029
+    },
+    {
+      "id": "N07",
+      "t": 95.198
+    },
+    {
+      "id": "easy_click",
+      "t": 106.326
+    },
+    {
+      "id": "N08",
+      "t": 108.501
+    },
+    {
+      "id": "N09",
+      "t": 123.502
+    },
+    {
+      "id": "approve",
+      "t": 130.909
+    },
+    {
+      "id": "edit",
+      "t": 139.131
+    },
+    {
+      "id": "end",
+      "t": 148.961
+    }
+  ],
+  "audio": [
+    {
+      "key": "S1",
+      "start": 65.237,
+      "offset": 0,
+      "dur": 4.826,
+      "file": "/tmp/claude-0/-home-user-FullStuckEngineer/5013860d-8a30-5cc9-9339-69f4f4dd5d4a/scratchpad/video/takes/take2_journey_S1.wav"
+    },
+    {
+      "key": "S2",
+      "start": 70.072,
+      "offset": 0,
+      "dur": 5.784,
+      "file": "/tmp/claude-0/-home-user-FullStuckEngineer/5013860d-8a30-5cc9-9339-69f4f4dd5d4a/scratchpad/video/takes/take2_journey_S2.wav"
+    },
+    {
+      "key": "S3",
+      "start": 75.871,
+      "offset": 0,
+      "dur": 8,
+      "file": "/tmp/claude-0/-home-user-FullStuckEngineer/5013860d-8a30-5cc9-9339-69f4f4dd5d4a/scratchpad/video/takes/take2_journey_S3.wav"
+    },
+    {
+      "key": "S4",
+      "start": 78.878,
+      "offset": 0,
+      "dur": 12.331,
+      "file": "/tmp/claude-0/-home-user-FullStuckEngineer/5013860d-8a30-5cc9-9339-69f4f4dd5d4a/scratchpad/video/takes/take2_journey_S4.wav"
+    },
+    {
+      "key": "S5",
+      "start": 91.219,
+      "offset": 0,
+      "dur": 3.325,
+      "file": "/tmp/claude-0/-home-user-FullStuckEngineer/5013860d-8a30-5cc9-9339-69f4f4dd5d4a/scratchpad/video/takes/take2_journey_S5.wav"
+    }
+  ],
+  "state": {
+    "selectedEmailId": "northbridge-demo",
+    "mode": "easyread",
+    "currentBeatIndex": 4,
+    "isPlaying": false,
+    "draftText": "Dear Aiko,\n\nThank you for the second-round interview invitation. Regarding the proposed interview time on Wednesday, 12 November 2026, could you please clarify which day of the week you mean, as there is a mismatch with the calendar? I will submit the form accordingly.\n\nThe email says \"Thursday, 13 November 2026, 17:00 JST\", but 13 November 2026 is a Friday.\nCould you please confirm which day you mean?\n\nBest regards,\nTinish Thank you.",
+    "approvalState": "none",
+    "serverCalls": {
+      "analyze": 0,
+      "speak": 6
+    }
+  },
+  "errors": [],
+  "durations": {
+    "N04": 14.88,
+    "N05": 27.68,
+    "N06": 11.48,
+    "N07": 10.32,
+    "N08": 14,
+    "N09": 20.56
+  },
+  "afterCaptions": {
+    "selectedEmailId": "northbridge-demo",
+    "mode": "captions",
+    "currentBeatIndex": 4,
+    "isPlaying": false,
+    "draftText": "Dear Aiko,\n\nThank you for the second-round interview invitation. Regarding the proposed interview time on Wednesday, 12 November 2026, could you please clarify which day of the week you mean, as there is a mismatch with the calendar? I will submit the form accordingly.\n\nThe email says \"Thursday, 13 November 2026, 17:00 JST\", but 13 November 2026 is a Friday.\nCould you please confirm which day you mean?\n\nBest regards,\nTinish",
+    "approvalState": "none",
+    "serverCalls": {
+      "analyze": 0,
+      "speak": 6
+    },
+    "audioPaused": true,
+    "caption": "WARNING\nWarning. The email says Thursday, 13 November 2026, 17:00 JST. Our check found that this date is a Friday.\nE3"
+  },
+  "afterApprove": "Approved — not sent",
+  "afterEdit": "Not approved yet",
+  "apiCalls": [
+    {
+      "url": "speak",
+      "t": 64.617
+    },
+    {
+      "url": "speak",
+      "t": 65.204
+    },
+    {
+      "url": "speak",
+      "t": 70.068
+    },
+    {
+      "url": "speak",
+      "t": 75.861
+    },
+    {
+      "url": "speak",
+      "t": 78.857
+    },
+    {
+      "url": "speak",
+      "t": 91.212
+    }
+  ]
+}
