@@ -46,7 +46,7 @@ try {
   let body = resp ? await resp.json().catch(() => null) : null;
   if (!body?.analysis) {
     // Already analysed earlier: the page used the saved Gemini result (no new Gemini call needed).
-    body = await page.evaluate(() => fetch("/api/analysis/northbridge-demo").then((r) => r.json()));
+    body = await page.evaluate(() => fetch((window.__jeriApiBase || "") + "/api/analysis/northbridge-demo").then((r) => r.json()));
     if (body) body.cached = true;
   }
   const source = body?.analysis?.meta?.source;
@@ -89,6 +89,8 @@ try {
   const target = Math.max(0, beats.findIndex((b) => b.kind === "risk"));
   for (let i = (await S()).currentBeatIndex; i < target; i++) await page.locator("#btn-next").click();
   await page.locator("#btn-play").click(); // play from the warning beat
+  // Switch only once this beat is really playing, so its own audio request is not counted as a "switch" call.
+  await page.waitForFunction(() => { const a = document.getElementById("audio"); return !a.paused && a.currentTime > 0.1; }, null, { timeout: 120_000 }).catch(() => {});
   await page.waitForTimeout(300);
   const idxBefore = (await S()).currentBeatIndex;
   const reqBeforeSwitch = requests.length;

@@ -41,8 +41,37 @@ function resolveEmail(body) {
   return { id, text, subject: String(subject || "").slice(0, 300), from: String(from || "").slice(0, 300), lang: lang === "ja" || lang === "en" ? lang : guessLang };
 }
 
+// The page may be served from Firebase Hosting (another origin). Only these origins may call the API from a browser.
+function allowedOrigin(origin, env) {
+  if (!origin) return null;
+  const extra = String(env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (extra.includes(origin)) return origin;
+  if (/^https:\/\/[a-z0-9-]+\.(web\.app|firebaseapp\.com)$/.test(origin)) return origin;
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
+  return null;
+}
+function withCors(res, origin) {
+  if (!origin) return res;
+  const out = new Response(res.body, res);
+  out.headers.set("access-control-allow-origin", origin);
+  out.headers.append("vary", "Origin");
+  return out;
+}
+
 export default {
   async fetch(request, env, ctx) {
+    const origin = allowedOrigin(request.headers.get("origin"), env);
+    if (request.method === "OPTIONS" && new URL(request.url).pathname.startsWith("/api/")) {
+      return new Response(null, { status: 204, headers: origin ? {
+        "access-control-allow-origin": origin, "access-control-allow-methods": "GET, POST, OPTIONS",
+        "access-control-allow-headers": "content-type", "access-control-max-age": "86400", vary: "Origin" } : {} });
+    }
+    return withCors(await handle(request, env, ctx), origin);
+  },
+};
+
+const handle = async (request, env, ctx) => {
+  {
     const url = new URL(request.url);
     const path = url.pathname;
     const ip = request.headers.get("cf-connecting-ip") || "local";
@@ -115,5 +144,5 @@ export default {
         detail: err.message,
       }, status);
     }
-  },
+  }
 };

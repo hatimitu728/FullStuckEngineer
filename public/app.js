@@ -182,8 +182,11 @@ function announce(msg) {
   setTimeout(() => { live.textContent = msg; }, 50);
 }
 
+// Where the API lives. Empty = same origin. The Firebase Hosting build sets it in a <meta> tag.
+const API_BASE = (document.querySelector('meta[name="jeri-api-base"]')?.content || "").replace(/\/$/, "");
+window.__jeriApiBase = API_BASE;
 async function api(path, body) {
-  const res = await fetch(path, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : {});
+  const res = await fetch(API_BASE + path, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : {});
   let json = null;
   try { json = await res.json(); } catch {}
   if (!res.ok) throw Object.assign(new Error(json?.error || `Request failed (${res.status})`), { detail: json?.detail, status: res.status });

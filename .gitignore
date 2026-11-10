@@ -12,3 +12,5 @@ playwright-report/
 .DS_Store
 .dev.vars
 .wrangler/
+dist-firebase/
+.firebase/
