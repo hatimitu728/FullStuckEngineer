@@ -57,7 +57,8 @@ async function geminiTts(text, lang, rate, model = GEMINI_TTS_MODEL) {
         content: [{
           type: "text",
           text: text.replace(/[<>]/g, " "), // angle brackets are vocal-event tags in Gemini TTS
-          annotations: [{ type: "speech_metadata", style: styleFor(rate) }],
+          // Only the 3.8 TTS models accept a speaking-style note; older models reject it.
+          ...(/3\.8/.test(model) ? { annotations: [{ type: "speech_metadata", style: styleFor(rate) }] } : {}),
         }],
       }],
       response_format: { type: "audio" },
@@ -164,8 +165,12 @@ async function synth(text, lang, rate) {
 }
 
 const inflight = new Map();
+export function clipKey(text, lang, rate) {
+  const r = Math.min(1.5, Math.max(0.6, Number(rate) || 1));
+  return createHash("sha256").update(`${process.env.TTS_ENGINE || "gemini"}|${GEMINI_VOICE}|${lang}|${r}|${text}`).digest("hex");
+}
 async function clipFor(text, lang, rate) {
-  const k = createHash("sha256").update(`${process.env.TTS_ENGINE || "gemini"}|${GEMINI_VOICE}|${lang}|${rate}|${text}`).digest("hex");
+  const k = clipKey(text, lang, rate);
   if (cache.has(k)) return cache.get(k);
   if (inflight.has(k)) return inflight.get(k);
   const p = (async () => {
