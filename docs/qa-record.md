@@ -1,6 +1,6 @@
 # QA record — みつ’s 26-item checklist + CORE gate
 
-**CORE ✅ on real Gemini + real Gemini TTS (Tue 10 Nov, 13:20 JST, local run, nothing mocked).** Re-run on the live URL after deploy.
+**CORE ✅ on real Gemini + real Gemini TTS (Tue 10 Nov, 13:20 JST, local run, nothing mocked).** **CORE ✅ on the live URL https://jeri.fullstuckengineer.workers.dev (Cloudflare Workers), Tue 10 Nov 2026 ~16:45 JST.**
 
 Automated by `scripts/core-gate.js` (CORE) and `scripts/a11y-check.js` (keyboard, screen-reader structure, axe WCAG 2.1 A/AA, text zoom).
 Status as of the build on Tue 10 Nov 2026. “Human” = still needs a person on a real device.

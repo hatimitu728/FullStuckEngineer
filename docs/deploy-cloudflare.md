@@ -1,5 +1,7 @@
 # Cloudflare Workers にデプロイ（無料）/ Deploy to Cloudflare Workers (free)
 
+**Live:** https://jeri.fullstuckengineer.workers.dev — updated with `npx wrangler deploy -c wrangler.embedded.toml` (API token in `CLOUDFLARE_API_TOKEN`).
+
 Jeri runs on the Cloudflare Workers **free plan**: the page is served as static files, `/api/*` runs in a Worker,
 saved analyses and voice clips live in **Workers KV**, and the Gemini key is a **Worker secret** (never in code or GitHub).
 

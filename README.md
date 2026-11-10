@@ -4,7 +4,7 @@
 
 Built for DevFest GDGoC Japan Hackathon 2026 · Theme: *“Own the Why, Build with intent.”* · Team FullStuckEngineer
 
-- **Live URL:** _(added after deploy)_
+- **Live URL:** **https://jeri.fullstuckengineer.workers.dev** (Cloudflare Workers, free plan; CORE gate passed on this URL on Tue 10 Nov 2026)
 - **Demo email:** “Northbridge” is fictional EXAMPLE DATA. No real inboxes or personal data are used.
 - **Screen recording (1:51, with sound):** [docs/media/jeri-demo-recording.mp4](docs/media/jeri-demo-recording.mp4): the real app on real Gemini analysis + real Gemini TTS, recorded Tue 10 Nov 2026. The step captions and cursor dot were added by the recording script.
 
