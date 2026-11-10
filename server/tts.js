@@ -4,6 +4,7 @@
 // TTS_ENGINE = "gemini" (default, falls back to Cloud TTS on error) | "cloud" | "gemini-only"
 import { createHash } from "node:crypto";
 import { getBlob, saveBlob } from "./store.js";
+import { VERTEX, accessToken } from "./googleAuth.js";
 
 const GEMINI_TTS_URL = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/interactions";
 // Tried in order. Each model has its own free-tier quota (per minute AND per day).
@@ -14,9 +15,10 @@ const GEMINI_TTS_MODEL = GEMINI_TTS_MODELS[0];
 const exhaustedUntil = new Map(); // model -> time when its quota should be back
 const GEMINI_VOICE = process.env.GEMINI_TTS_VOICE || "Sulafat"; // prebuilt voice ("Warm"); language is auto-detected
 const CLOUD_TTS_URL = (process.env.CLOUD_TTS_BASE || "https://texttospeech.googleapis.com") + "/v1/text:synthesize";
+// Tried in order: the Chirp 3 HD voice with the same name as the Gemini voice, then a standard voice, then the default.
 const CLOUD_VOICES = {
-  en: { languageCode: "en-US", name: "en-US-Standard-C" },
-  ja: { languageCode: "ja-JP", name: "ja-JP-Standard-A" },
+  en: [{ languageCode: "en-US", name: `en-US-Chirp3-HD-${process.env.GEMINI_TTS_VOICE || "Sulafat"}` }, { languageCode: "en-US", name: "en-US-Standard-C" }, { languageCode: "en-US" }],
+  ja: [{ languageCode: "ja-JP", name: `ja-JP-Chirp3-HD-${process.env.GEMINI_TTS_VOICE || "Sulafat"}` }, { languageCode: "ja-JP", name: "ja-JP-Standard-A" }, { languageCode: "ja-JP" }],
 };
 const cache = new Map(); // key -> {data, mime, engine}
 const MAX_CACHE = 500;
@@ -77,20 +79,26 @@ async function geminiTts(text, lang, rate, model = GEMINI_TTS_MODEL) {
 }
 
 async function cloudTts(text, lang, rate) {
-  const key = process.env.TTS_API_KEY || process.env.GEMINI_API_KEY || "proxy-injected";
-  const voice = CLOUD_VOICES[lang] || CLOUD_VOICES.en;
-  const call = (v) => fetch(CLOUD_TTS_URL, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-goog-api-key": key },
-    body: JSON.stringify({ input: { text }, voice: v, audioConfig: { audioEncoding: "MP3", speakingRate: rate } }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  let res = await call(voice);
-  if (res.status === 400) res = await call({ languageCode: voice.languageCode }); // voice name unavailable
-  if (!res.ok) throw new TtsError(`Cloud TTS returned ${res.status}: ${(await errText(res)).slice(0, 300)}`);
-  const { audioContent } = await res.json();
-  if (!audioContent) throw new TtsError("Cloud TTS returned no audio.");
-  return { data: audioContent, mime: "audio/mpeg", engine: "cloud-tts-standard" };
+  const auth = VERTEX
+    ? { authorization: `Bearer ${await accessToken()}` }
+    : { "x-goog-api-key": process.env.TTS_API_KEY || process.env.GEMINI_API_KEY || "proxy-injected" };
+  let lastErr;
+  for (const voice of CLOUD_VOICES[lang] || CLOUD_VOICES.en) {
+    const res = await fetch(CLOUD_TTS_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...auth },
+      body: JSON.stringify({ input: { text }, voice, audioConfig: { audioEncoding: "MP3", speakingRate: rate } }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (res.ok) {
+      const { audioContent } = await res.json();
+      if (!audioContent) throw new TtsError("Cloud TTS returned no audio.");
+      return { data: audioContent, mime: "audio/mpeg", engine: `cloud-tts ${voice.name || voice.languageCode}` };
+    }
+    lastErr = new TtsError(`Cloud TTS returned ${res.status}: ${(await errText(res)).slice(0, 300)}`);
+    if (res.status !== 400) break; // only an unknown voice is worth retrying with the next one
+  }
+  throw lastErr;
 }
 
 // Free-tier Gemini TTS allows only a few requests per minute, so calls run one at a time
@@ -149,7 +157,7 @@ async function geminiWithRetry(text, lang, rate) {
 }
 
 async function synth(text, lang, rate) {
-  const engine = process.env.TTS_ENGINE || "gemini";
+  const engine = process.env.TTS_ENGINE || (VERTEX ? "cloud" : "gemini");
   if (engine === "cloud") return cloudTts(text, lang, rate);
   try {
     return await enqueue(() => geminiWithRetry(text, lang, rate));

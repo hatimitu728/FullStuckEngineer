@@ -4,10 +4,17 @@ import { badQuotes } from "./postprocess.js";
 import { preScanWeekdays } from "./dateCheck.js";
 
 const PROMPT = readFileSync(new URL("./prompt.md", import.meta.url), "utf8");
+import { VERTEX, PROJECT, accessToken } from "./googleAuth.js";
 const API = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/models";
+// Vertex AI (GEMINI_BACKEND=vertex): billed to the Google Cloud project, so Google Cloud credits apply.
+const VERTEX_LOCATION = process.env.VERTEX_LOCATION || "global";
+const VERTEX_BASE = process.env.VERTEX_API_BASE ||
+  (VERTEX_LOCATION === "global" ? "https://aiplatform.googleapis.com" : `https://${VERTEX_LOCATION}-aiplatform.googleapis.com`);
 // Tried in order. On "not found" or "busy" (404/429/5xx) the next model is used.
 // gemini-2.5-flash is closed to new API keys; the 3.x flash models can be briefly overloaded.
-const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3-flash-preview"];
+const DEFAULT_MODELS = VERTEX
+  ? ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite"]
+  : ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3-flash-preview"];
 const PASSES = 3;              // rounds through the list when every model is busy
 const PASS_WAIT_MS = [0, 3000, 8000];
 const NEXT_MODEL_ON = new Set([404, 429, 500, 502, 503, 504]);
@@ -64,10 +71,15 @@ async function callModel(model, contents, { signal: total }) {
 }
 
 async function callModelOnce(model, contents, signal) {
-  const key = process.env.GEMINI_API_KEY || "proxy-injected";
-  const res = await fetch(`${API}/${encodeURIComponent(model)}:generateContent`, {
+  const url = VERTEX
+    ? `${VERTEX_BASE}/v1/projects/${PROJECT}/locations/${VERTEX_LOCATION}/publishers/google/models/${encodeURIComponent(model)}:generateContent`
+    : `${API}/${encodeURIComponent(model)}:generateContent`;
+  const auth = VERTEX
+    ? { authorization: `Bearer ${await accessToken()}` }
+    : { "x-goog-api-key": process.env.GEMINI_API_KEY || "proxy-injected" };
+  const res = await fetch(url, {
     method: "POST",
-    headers: { "content-type": "application/json", "x-goog-api-key": key },
+    headers: { "content-type": "application/json", ...auth },
     body: JSON.stringify({
       contents,
       generationConfig: {

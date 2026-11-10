@@ -43,7 +43,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/api/health", (req, res) => res.json({ ok: true, stub: STUB, store: storeInfo() }));
+app.get("/api/health", (req, res) => res.json({ ok: true, stub: STUB, backend: process.env.GEMINI_BACKEND === "vertex" ? "vertex" : "gemini-api", tts: process.env.TTS_ENGINE || (process.env.GEMINI_BACKEND === "vertex" ? "cloud" : "gemini"), store: storeInfo() }));
 app.get("/api/stats", (req, res) => res.json(stats));
 
 app.get("/api/config", (req, res) => {

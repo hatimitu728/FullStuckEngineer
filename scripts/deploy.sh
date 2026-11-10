@@ -5,8 +5,9 @@ set -u
 REGION="${REGION:-asia-northeast1}"
 fail() { echo ""; echo "❌ $1"; echo "   $2"; exit 1; }
 
-[ -n "${GEMINI_API_KEY:-}" ] || fail "GEMINI_API_KEY が空です / GEMINI_API_KEY is empty." \
-  "read -s -p \"Gemini API key: \" GEMINI_API_KEY; echo  を実行してキーを貼り付けてください。"
+# No API key → Vertex AI mode: Gemini + Text-to-Speech billed to this project (Google Cloud credits apply).
+if [ -n "${GEMINI_API_KEY:-}" ]; then BACKEND=gemini-api; else BACKEND=vertex; fi
+echo "== mode: $BACKEND"
 [ -n "${PROJECT_ID:-}" ] || fail "PROJECT_ID が空です / PROJECT_ID is empty." \
   "gcloud projects list で PROJECT_ID を確認し、gcloud config set project <PROJECT_ID> を実行してください。"
 
@@ -25,7 +26,7 @@ BILLING=$(gcloud billing projects describe "$PROJECT_ID" --format='value(billing
 
 echo "== 3/6 API を有効化（初回は1〜2分）/ enabling APIs"
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
-  generativelanguage.googleapis.com texttospeech.googleapis.com firestore.googleapis.com || \
+  generativelanguage.googleapis.com texttospeech.googleapis.com firestore.googleapis.com aiplatform.googleapis.com || \
   fail "API を有効にできませんでした / could not enable APIs." "1分待ってからもう一度実行してください。"
 
 echo "== 4/6 ビルド用の権限 / build permissions"
@@ -33,7 +34,9 @@ NUM=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 SA="${NUM}-compute@developer.gserviceaccount.com"
 echo "   build service account: $SA"
 GRANTED=0
-for ROLE in roles/run.builder roles/storage.objectViewer roles/artifactregistry.writer roles/logging.logWriter; do
+# build roles + runtime roles (the same default account runs the service: Vertex AI, Text-to-Speech, Firestore)
+for ROLE in roles/run.builder roles/storage.objectViewer roles/artifactregistry.writer roles/logging.logWriter \
+            roles/aiplatform.user roles/serviceusage.serviceUsageConsumer roles/datastore.user; do
   if gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$SA" --role="$ROLE" \
       --condition=None --quiet --format=none; then
     echo "   ok $ROLE"; GRANTED=1
@@ -50,7 +53,11 @@ gcloud firestore databases create --location="$REGION" --type=firestore-native >
   && echo "   created" || echo "   already exists (ok)"
 
 echo "== 6/6 Cloud Run にデプロイ（3〜5分）/ deploying"
-ENV="GEMINI_API_KEY=${GEMINI_API_KEY},FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-$PROJECT_ID}"
+if [ "$BACKEND" = vertex ]; then
+  ENV="GEMINI_BACKEND=vertex,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-$PROJECT_ID}"
+else
+  ENV="GEMINI_API_KEY=${GEMINI_API_KEY},FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-$PROJECT_ID}"
+fi
 if [ -n "${FIREBASE_API_KEY:-}" ]; then
   ENV="$ENV,FIREBASE_API_KEY=$FIREBASE_API_KEY,FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN,FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-$PROJECT_ID},FIREBASE_APP_ID=$FIREBASE_APP_ID"
 fi

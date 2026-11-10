@@ -55,7 +55,7 @@ test("falls back to Cloud TTS when Gemini TTS fails", async () => {
   const r = await speakBeats([{ id: "S2", text: "Fallback please." }], { lang: "ja" });
   assert.equal(r.clips.S2, "SUQz");
   assert.equal(r.mimes.S2, "audio/mpeg");
-  assert.equal(r.engine, "cloud-tts-standard");
+  assert.match(r.engine, /^cloud-tts /);
   assert.equal(seen.cloud, 1);
 });
 
