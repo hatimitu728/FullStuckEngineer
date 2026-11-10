@@ -1,5 +1,6 @@
 # Jeri on Cloudflare Workers (free plan). Deploy: see docs/deploy-cloudflare.md
-name = "jeri"
+# The Gemini key is NOT here: add it in the dashboard as a Secret named GEMINI_API_KEY.
+name = "fullstuckengineer"
 main = "worker/index.js"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
@@ -10,10 +11,11 @@ binding = "ASSETS"
 not_found_handling = "none"
 run_worker_first = ["/api/*"]
 
-# Created with: npx wrangler kv namespace create JERI_KV  (then paste the id here)
-[[kv_namespaces]]
-binding = "JERI_KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+# KV (saved analyses + voice clips). Optional: Jeri works without it, but saving clips protects the free voice quota.
+# To add: Cloudflare dashboard → Storage & Databases → KV → Create "JERI_KV" → copy its ID, then uncomment:
+# [[kv_namespaces]]
+# binding = "JERI_KV"
+# id = "<KV namespace ID>"
 
 [vars]
 TTS_ENGINE = "gemini-only"

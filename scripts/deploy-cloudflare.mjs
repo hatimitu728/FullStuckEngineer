@@ -19,7 +19,7 @@ if (!/You are logged in|associated with the email/i.test(who.stdout + who.stderr
 
 step("2/5", "KV (保存場所) を用意 / preparing KV storage");
 let toml = readFileSync("wrangler.toml", "utf8");
-if (toml.includes("REPLACE_WITH_KV_NAMESPACE_ID")) {
+if (!/^\[\[kv_namespaces\]\]/m.test(toml)) {
   const list = run(["kv", "namespace", "list"]);
   let id = null;
   try { id = JSON.parse(list.stdout).find((n) => /JERI_KV/.test(n.title))?.id; } catch {}
@@ -27,9 +27,11 @@ if (toml.includes("REPLACE_WITH_KV_NAMESPACE_ID")) {
     const created = run(["kv", "namespace", "create", "JERI_KV"]);
     id = /"?id"?\s*[:=]\s*"([0-9a-f]{32})"/.exec(created.stdout + created.stderr)?.[1];
   }
-  if (!id) fail("KV を作れませんでした / could not create KV:\n" + list.stderr);
-  toml = toml.replace("REPLACE_WITH_KV_NAMESPACE_ID", id);
-  console.log(`   KV id: ${id}`);
+  if (!id) console.log("   ⚠ KV を作れませんでした（KV なしで続けます）/ could not create KV, continuing without it");
+  else {
+    toml += `\n[[kv_namespaces]]\nbinding = "JERI_KV"\nid = "${id}"\n`;
+    console.log(`   KV id: ${id}  (wrangler.toml に追加しました。git commit して push すると Cloudflare の自動ビルドでも使われます)`);
+  }
 } else console.log("   already set (ok)");
 
 const domain = process.argv[2];
