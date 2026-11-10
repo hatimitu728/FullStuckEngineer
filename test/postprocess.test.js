@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { finalize, badQuotes, locateQuote } from "../server/postprocess.js";
+import { finalize, badQuotes, locateQuote, insertBeforeSignOff } from "../server/postprocess.js";
 
 const email = JSON.parse(readFileSync(new URL("../fixtures/emails/northbridge.json", import.meta.url)));
 const sample = JSON.parse(readFileSync(new URL("../fixtures/sample-northbridge.json", import.meta.url)));
@@ -81,4 +81,30 @@ test("draft guard leaves a good draft alone; duplicate quotes merge; draft beat 
   assert.match(a.spokenBeats.at(-1).text, /not sent/);
   // sample draft only mentions Thursday (12 Nov) – Friday (13 Nov) note is added, Thursday one is not duplicated
   assert.equal((a.draftReply.match(/is a Thursday/g) || []).length, 1);
+});
+
+test("insertBeforeSignOff: one-line drafts, multi-line drafts, Japanese, and no sign-off", () => {
+  const B = "QUESTION?";
+  assert.equal(insertBeforeSignOff("Dear Aiko, Thank you for the invitation. Best regards, Tinish", B),
+    "Dear Aiko, Thank you for the invitation.\n\nQUESTION?\n\nBest regards, Tinish");
+  assert.equal(insertBeforeSignOff("Dear Aiko,\n\nThank you for the invitation.\n\nWarm regards,\nTinish", B),
+    "Dear Aiko,\n\nThank you for the invitation.\n\nQUESTION?\n\nWarm regards,\nTinish");
+  assert.equal(insertBeforeSignOff("山田様\nご案内ありがとうございます。\nよろしくお願いいたします。\nティニッシュ", B),
+    "山田様\nご案内ありがとうございます。\n\nQUESTION?\n\nよろしくお願いいたします。\nティニッシュ");
+  assert.equal(insertBeforeSignOff("Hi Kenji, sure.", B), "Hi Kenji, sure.\n\nQUESTION?");
+});
+
+test("no-reply email: the draft beat says no reply is needed", () => {
+  const g = structuredClone(sample);
+  g.needsReply = { value: false, why: "", evidenceIds: [] };
+  const a = finalize(g, email, { now: NOW });
+  assert.match(a.spokenBeats.at(-1).text, /No reply is needed/);
+});
+
+test("draft guard does not duplicate a question Gemini already asked", () => {
+  const g = structuredClone(sample);
+  g.draftReply = "Dear Aiko,\n\nCould you please clarify which day you mean for Wednesday, 12 November 2026 and Thursday, 13 November 2026?\n\nBest regards,\nTinish";
+  const a = finalize(g, email, { now: NOW });
+  assert.equal(a.draftReply, g.draftReply);
+  assert.ok(!a.meta.quality.notes.some((n) => /added a question/.test(n)));
 });

@@ -6,7 +6,12 @@ import { createHash } from "node:crypto";
 import { getBlob, saveBlob } from "./store.js";
 
 const GEMINI_TTS_URL = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/interactions";
-const GEMINI_TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts";
+// Tried in order. Each model has its own free-tier quota (per minute AND per day).
+const GEMINI_TTS_MODELS = (process.env.GEMINI_TTS_MODELS || process.env.GEMINI_TTS_MODEL ||
+  "gemini-3.8-flash-tts,gemini-3.8-flash-lite-tts,gemini-3.1-flash-tts-preview,gemini-2.5-flash-preview-tts")
+  .split(",").map((m) => m.trim()).filter(Boolean);
+const GEMINI_TTS_MODEL = GEMINI_TTS_MODELS[0];
+const exhaustedUntil = new Map(); // model -> time when its quota should be back
 const GEMINI_VOICE = process.env.GEMINI_TTS_VOICE || "Sulafat"; // prebuilt voice ("Warm"); language is auto-detected
 const CLOUD_TTS_URL = (process.env.CLOUD_TTS_BASE || "https://texttospeech.googleapis.com") + "/v1/text:synthesize";
 const CLOUD_VOICES = {
@@ -40,13 +45,13 @@ function findAudio(node, found = []) {
   return found;
 }
 
-async function geminiTts(text, lang, rate) {
+async function geminiTts(text, lang, rate, model = GEMINI_TTS_MODEL) {
   const key = process.env.GEMINI_API_KEY || "proxy-injected";
   const res = await fetch(GEMINI_TTS_URL, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({
-      model: GEMINI_TTS_MODEL,
+      model,
       input: [{
         type: "user_input",
         content: [{
@@ -65,7 +70,9 @@ async function geminiTts(text, lang, rate) {
   const items = findAudio(json.steps || json);
   const a = items[items.length - 1];
   if (!a?.data) throw new TtsError("Gemini TTS returned no audio.");
-  return { data: a.data, mime: a.mime_type || a.mimeType || "audio/wav", engine: GEMINI_TTS_MODEL };
+  const mime = a.mime_type || a.mimeType || "audio/wav";
+  if (/^audio\/l16/i.test(mime)) return { data: pcmToWav(a.data, mime), mime: "audio/wav", engine: model };
+  return { data: a.data, mime, engine: model };
 }
 
 async function cloudTts(text, lang, rate) {
@@ -90,22 +97,54 @@ async function cloudTts(text, lang, rate) {
 let tail = Promise.resolve();
 function enqueue(fn) { const run = tail.then(fn); tail = run.catch(() => {}); return run; }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-function retryDelayMs(message) {
-  const m = /retry in ([\d.]+)\s*s/i.exec(message) || /"retryDelay":\s*"([\d.]+)s"/.exec(message);
-  return m ? Math.ceil(Number(m[1]) * 1000) + 500 : 20_000;
+/** "retry in 26s", "retry in 3h7m15s", or RetryInfo "retryDelay": "26s" → milliseconds. */
+export function retryDelayMs(message) {
+  const m = /retry in ((?:[\d.]+h)?(?:[\d.]+m(?!s))?(?:[\d.]+s)?)/i.exec(message) || /"retryDelay":\s*"([\d.]+s)"/.exec(message);
+  if (!m || !m[1]) return 20_000;
+  const part = (u) => Number((new RegExp(`([\\d.]+)${u}`).exec(m[1]) || [0, 0])[1]);
+  return Math.ceil((part("h") * 3600 + part("m") * 60 + part("s")) * 1000) + 500;
+}
+
+/** Raw 16-bit PCM (audio/L16) → playable WAV (base64). */
+export function pcmToWav(b64, mime) {
+  const pcm = Buffer.from(b64, "base64");
+  const rate = Number(/rate=(\d+)/i.exec(mime)?.[1] || 24000);
+  const ch = Number(/channels=(\d+)/i.exec(mime)?.[1] || 1);
+  const h = Buffer.alloc(44);
+  h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVE", 8); h.write("fmt ", 12);
+  h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(ch, 22); h.writeUInt32LE(rate, 24);
+  h.writeUInt32LE(rate * ch * 2, 28); h.writeUInt16LE(ch * 2, 32); h.writeUInt16LE(16, 34);
+  h.write("data", 36); h.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([h, pcm]).toString("base64");
 }
 
 async function geminiWithRetry(text, lang, rate) {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      return await geminiTts(text, lang, rate);
-    } catch (err) {
-      if (!/ 429:/.test(err.message) || attempt >= 4) throw err;
-      const wait = Math.min(65_000, retryDelayMs(err.message));
-      console.warn(`[tts] rate limited, waiting ${Math.round(wait / 1000)}s (attempt ${attempt})`);
-      await sleep(wait);
+  let lastErr;
+  for (const model of GEMINI_TTS_MODELS) {
+    if ((exhaustedUntil.get(model) || 0) > Date.now()) continue;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        return await geminiTts(text, lang, rate, model);
+      } catch (err) {
+        lastErr = err;
+        const limited = / 429:/.test(err.message);
+        const wait = limited ? retryDelayMs(err.message) : 0;
+        if (limited && (/per day/i.test(err.message) || wait > 65_000)) {
+          exhaustedUntil.set(model, Date.now() + wait);
+          console.warn(`[tts] ${model}: daily quota used up, trying the next TTS model`);
+          break;
+        }
+        if (limited && attempt < 3) {
+          console.warn(`[tts] ${model}: rate limited, waiting ${Math.round(wait / 1000)}s`);
+          await sleep(wait);
+          continue;
+        }
+        if (/ (400|404|403):/.test(err.message)) console.warn(`[tts] ${model}: ${err.message.slice(0, 100)}`);
+        break; // other errors: try the next model
+      }
     }
   }
+  throw lastErr || new TtsError("No Gemini TTS model is available right now.");
 }
 
 async function synth(text, lang, rate) {
@@ -126,7 +165,7 @@ async function synth(text, lang, rate) {
 
 const inflight = new Map();
 async function clipFor(text, lang, rate) {
-  const k = createHash("sha256").update(`${process.env.TTS_ENGINE || "gemini"}|${GEMINI_TTS_MODEL}|${GEMINI_VOICE}|${lang}|${rate}|${text}`).digest("hex");
+  const k = createHash("sha256").update(`${process.env.TTS_ENGINE || "gemini"}|${GEMINI_VOICE}|${lang}|${rate}|${text}`).digest("hex");
   if (cache.has(k)) return cache.get(k);
   if (inflight.has(k)) return inflight.get(k);
   const p = (async () => {

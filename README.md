@@ -64,6 +64,12 @@ or run the **Deploy Jeri to Cloud Run** GitHub Action (secrets listed at the top
 Step-by-step (credit, key, Cloud Shell deploy): [docs/setup-google-cloud.md](docs/setup-google-cloud.md).
 Optional Firebase sign-in: set `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID` (public web config) and add the live domain to Firebase Auth → Authorized domains. Firestore rules are in `firestore.rules`.
 
+## Free-tier limits (good to know before a demo)
+- Gemini TTS free tier: about 3 requests/minute and 10/day **per model**. Jeri makes one clip per beat, one at a time, falls back through
+  `gemini-3.8-flash-tts → 3.8-flash-lite-tts → 3.1-flash-tts-preview → 2.5-flash-preview-tts`, and caches every clip (Firestore on Cloud Run).
+  Play the demo email once before recording so all clips are cached. Linking a billing account to the key's project removes these limits.
+- Analysis models are tried in order (`gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-flash-latest`, lite models) and a busy (503) or slow one is skipped.
+
 ## Project layout
 
 ```

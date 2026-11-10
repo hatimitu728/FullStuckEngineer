@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { realWeekday, weekdayInText, parseWritten, checkDates } from "../server/dateCheck.js";
+import { realWeekday, weekdayInText, parseWritten, checkDates, preScanWeekdays } from "../server/dateCheck.js";
 
 const NOW = new Date("2026-11-10T00:30:00+09:00");
 
@@ -83,4 +83,15 @@ test("correct dates produce no risks; date-only deadline counts to end of day", 
 test("deadline already passed", () => {
   const dates = [{ id: "D1", label: "Reply", kind: "deadline", asWritten: "Monday, 2 November 2026", isoDate: "" }];
   assert.deepEqual(checkDates(dates, { now: NOW }).map((r) => r.type), ["deadline_passed"]);
+});
+
+test("preScanWeekdays finds weekday+date pairs in raw email text", async () => {
+  const { readFileSync } = await import("node:fs");
+  const nb = JSON.parse(readFileSync(new URL("../fixtures/emails/northbridge.json", import.meta.url))).text;
+  const f = preScanWeekdays(nb, { now: NOW });
+  assert.deepEqual(f.map((x) => [x.written, x.real, x.matches]), [["Wednesday", "Thursday", false], ["Thursday", "Friday", false]]);
+  const ja = JSON.parse(readFileSync(new URL("../fixtures/emails/japanese-intern.json", import.meta.url))).text;
+  assert.deepEqual(preScanWeekdays(ja, { now: NOW }).map((x) => [x.written, x.real]), [["Tuesday", "Wednesday"], ["Monday", "Monday"]]);
+  const prof = JSON.parse(readFileSync(new URL("../fixtures/emails/professor.json", import.meta.url))).text;
+  assert.ok(preScanWeekdays(prof, { now: NOW }).every((x) => x.matches));
 });

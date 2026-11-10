@@ -38,6 +38,16 @@ export function badQuotes(emailText, analysis) {
   return bad;
 }
 
+/** Put a block just before the sign-off ("Best regards", "よろしくお願いいたします"…), never above the greeting. */
+export function insertBeforeSignOff(text, block) {
+  const re = /(^|\n|[.!?。]\s*)((?:best|kind|warm|warmest)\s+regards|regards,|sincerely|best wishes|many thanks|yours (?:sincerely|truly)|thanks,|よろしくお願い(?:いた)?します|敬具)/gi;
+  let m, last = null;
+  while ((m = re.exec(text))) last = m;
+  if (!last) return `${text.replace(/\s*$/, "")}\n\n${block}`;
+  const idx = last.index + last[1].length;
+  return `${text.slice(0, idx).replace(/\s*$/, "")}\n\n${block}\n\n${text.slice(idx).trimStart()}`;
+}
+
 const RISK_DATE_WORDS = /weekday|date|deadline|曜日|日付|期限/i;
 
 function spokenRisk(r, datesById, lang) {
@@ -119,21 +129,30 @@ export function finalize(raw, email, { lang = "en", now = new Date(), model = ""
   // 3b. Draft guard: when a weekday is wrong, the draft must ask which day they mean (code adds it if missing).
   a.draftReply = String(a.draftReply || "");
   const wrong = codeRisks.filter((r) => r.type === "wrong_weekday");
-  const missing = wrong.filter((r) => !a.draftReply.includes(datesById[r.dateIds[0]]?.weekdayReal || "@@"));
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const asksQuestion = /[?？]|でしょうか|ください/.test(a.draftReply);
+  const mentions = (d) => {
+    if (!d?.isoDate) return false;
+    const [, m, day] = d.isoDate.slice(0, 10).split("-").map(Number);
+    return a.draftReply.includes(`${day} ${MONTHS[m - 1]}`) || a.draftReply.includes(`${MONTHS[m - 1]} ${day}`) || a.draftReply.includes(`${m}月${day}日`);
+  };
+  // Already handled when the draft names the real weekday, or asks a question about that date.
+  const missing = wrong.filter((r) => {
+    const d = datesById[r.dateIds[0]];
+    return !(a.draftReply.includes(d?.weekdayReal || "@@") || (asksQuestion && mentions(d)));
+  });
   if (missing.length) {
     const ask = lang === "ja"
       ? missing.map((r) => `メールには「${r.originalSays}」とありますが、${r.checkFound}`).join("\n") + "\nどちらの日のことか、ご確認いただけますでしょうか。"
       : missing.map((r) => `The email says "${r.originalSays}", but ${r.checkFound.replace(/\.$/, "")}.`).join("\n") + "\nCould you please confirm which day you mean?";
-    const lines = a.draftReply.split("\n");
-    let at = lines.findIndex((l) => /^\s*(best|kind|warm|many thanks|thanks|thank you|regards|sincerely|yours|よろしく|敬具)/i.test(l));
-    if (at < 0) at = Math.max(0, lines.length - 2);
-    lines.splice(at, 0, ask, "");
-    a.draftReply = lines.join("\n");
+    a.draftReply = insertBeforeSignOff(a.draftReply, ask);
     quality.notes.push("Jeri added a question about the date to the draft, because the weekday does not match.");
   }
 
   // 4. Spoken beats: Gemini's beats + code-made date warnings after the ask beats.
-  const draftBeat = lang === "ja" ? "返信の下書きがあります。まだ送信していません。確認してください。" : "Here is a draft reply. It is not sent. Please check it.";
+  const draftBeat = a.needsReply?.value === false
+    ? (lang === "ja" ? "返信は不要です。返信したい場合は、短い下書きがあります。まだ送信していません。" : "No reply is needed. If you want to reply anyway, a short draft is ready. It is not sent.")
+    : (lang === "ja" ? "返信の下書きがあります。まだ送信していません。確認してください。" : "Here is a draft reply. It is not sent. Please check it.");
   const beats = (a.spokenBeats || []).filter((b) => b.kind !== "risk" && b.text)
     .map((b) => (b.kind === "draft" ? { ...b, text: draftBeat } : b));
   const riskBeats = codeRisks.map((r) => ({

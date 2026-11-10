@@ -33,6 +33,9 @@ Rules:
   Never confirm a specific day or time if the email's weekday and date could disagree; ask instead.
 - "confidenceNote": one short sentence if something is unclear or you are unsure; otherwise an empty string.
 
+Date facts checked by our code BEFORE you (trust these; do not repeat them as warnings in beats or cards, code adds those):
+{date_facts}
+
 Today: {today} (JST)
 Email subject: """{subject}"""
 Email from: """{from}"""

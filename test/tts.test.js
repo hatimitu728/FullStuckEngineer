@@ -58,3 +58,14 @@ test("falls back to Cloud TTS when Gemini TTS fails", async () => {
   assert.equal(r.engine, "cloud-tts-standard");
   assert.equal(seen.cloud, 1);
 });
+
+test("retryDelayMs reads seconds, minutes and hours; pcmToWav adds a WAV header", async () => {
+  const { retryDelayMs, pcmToWav } = await import(`../server/tts.js?util`);
+  assert.equal(retryDelayMs("Please retry in 26s or upgrade"), 26_500);
+  assert.equal(retryDelayMs("Please retry in 3h7m15s or upgrade"), (3 * 3600 + 7 * 60 + 15) * 1000 + 500);
+  assert.equal(retryDelayMs("Please retry in 5.2s."), 5_700);
+  const wav = Buffer.from(pcmToWav(Buffer.alloc(480).toString("base64"), "audio/L16;codec=pcm;rate=24000"), "base64");
+  assert.equal(wav.subarray(0, 4).toString(), "RIFF");
+  assert.equal(wav.readUInt32LE(24), 24000);
+  assert.equal(wav.length, 44 + 480);
+});

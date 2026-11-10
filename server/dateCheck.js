@@ -204,3 +204,33 @@ export function checkDates(dates, { lang = "en", now = new Date() } = {}) {
   }
   return risks;
 }
+
+/**
+ * Before Gemini: find "weekday + date" phrases in the raw email and check them in code,
+ * so the prompt can state the verified facts (Gemini still never decides a weekday).
+ */
+export function preScanWeekdays(text, { now = new Date() } = {}) {
+  const year = new Date(now.getTime() + 9 * 3600 * 1000).getUTCFullYear();
+  const WD = "(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(?:day|nesday|rsday|urday|sday)?";
+  const MON = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*";
+  const patterns = [
+    new RegExp(`\\b${WD},?\\s+\\d{1,2}(?:st|nd|rd|th)?\\s+${MON}\\.?,?(?:\\s+\\d{4})?`, "gi"),
+    new RegExp(`\\b${WD},?\\s+${MON}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?,?(?:\\s+\\d{4})?`, "gi"),
+    /(?:\d{4}\s*年\s*)?\d{1,2}\s*月\s*\d{1,2}\s*日\s*[（(]\s*[日月火水木金土]\s*(?:曜日?)?\s*[）)]/g,
+  ];
+  const facts = [];
+  const seen = new Set();
+  for (const re of patterns) {
+    for (const m of text.matchAll(re)) {
+      const phrase = m[0].trim();
+      if (seen.has(phrase)) continue;
+      seen.add(phrase);
+      const written = weekdayInText(phrase);
+      const p = parseWritten(phrase, year);
+      if (!written || !p) continue;
+      const real = realWeekday(toJstIso({ ...p, hh: 12, mi: 0 }));
+      facts.push({ phrase, written, real, matches: written === real });
+    }
+  }
+  return facts;
+}

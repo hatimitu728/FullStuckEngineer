@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { responseSchema } from "./schema.js";
 import { badQuotes } from "./postprocess.js";
+import { preScanWeekdays } from "./dateCheck.js";
 
 const PROMPT = readFileSync(new URL("./prompt.md", import.meta.url), "utf8");
 const API = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/models";
@@ -25,6 +26,14 @@ function todayJst(now) {
   return `${t.toISOString().slice(0, 10)} (${days[t.getUTCDay()]})`;
 }
 
+function dateFacts(text, now) {
+  const facts = preScanWeekdays(text, { now });
+  if (!facts.length) return "No weekday + date pairs were found by our code.";
+  return facts.map((f) => f.matches
+    ? `- "${f.phrase}": weekday matches the date (${f.real}).`
+    : `- "${f.phrase}": the email says ${f.written}, but this date is a ${f.real}. MISMATCH – do not confirm this day in the draft; ask which day they mean.`).join("\n");
+}
+
 export function buildPrompt(email, { lang, readerName = "Tinish", now = new Date() }) {
   const vars = {
     reader_language: lang === "ja" ? "Japanese" : "English",
@@ -34,6 +43,7 @@ export function buildPrompt(email, { lang, readerName = "Tinish", now = new Date
     subject: email.subject || "",
     from: email.from || "",
     email_text: email.text,
+    date_facts: dateFacts(email.text, now),
   };
   return PROMPT.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
 }

@@ -54,3 +54,16 @@ axe WCAG 2.1 A/AA: 0 violations in Listen, Captions and Easy Read (stub data).
 - Duplicate evidence quotes (E4 = E6) are merged.
 - The draft beat always says “It is not sent.”
 - gemini-2.5-flash is closed to new keys; models are tried in order and a busy (503) or slow model is skipped.
+
+## Real Gemini on all 5 demo emails (Tue 10 Nov, afternoon)
+| Email | Result |
+|---|---|
+| Northbridge (×3 runs) | Ask found, both wrong weekdays + late deadline every time (code), “NOT needed” kept, draft asks which day |
+| Shift change | Wrong weekday (Sat 15 Nov is a Sunday) caught; draft asks instead of confirming |
+| Professor | Both asks found (report by Mon 16 Nov, slot choice by Fri 20 Nov); no false date warnings |
+| Club notice | “No reply needed”; no false warnings; last beat says no reply is needed |
+| ミナトデザイン (Japanese) | 11月18日（火）→ 水曜日 caught in Japanese; Japanese draft asks which day |
+
+Fixed after these runs: code now checks weekdays in the email *before* Gemini and gives it the facts, so drafts ask instead of confirming a wrong day;
+the date question is placed before the sign-off and never duplicated; free-tier TTS limits (3/min and 10/day per model) are handled by
+falling back through 4 Gemini TTS models and caching every clip.
