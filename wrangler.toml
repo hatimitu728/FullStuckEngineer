@@ -4,6 +4,9 @@ name = "fullstuckengineer"
 main = "worker/index.js"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
+# Public URL https://fullstuckengineer.<your-subdomain>.workers.dev (on every deploy) + preview URLs
+workers_dev = true
+preview_urls = true
 
 [assets]
 directory = "./public"
