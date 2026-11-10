@@ -4,7 +4,7 @@
 
 Built for DevFest GDGoC Japan Hackathon 2026 · Theme: *“Own the Why, Build with intent.”* · Team FullStuckEngineer
 
-- **Live URL:** **https://jeri.fullstuckengineer.workers.dev** (Cloudflare Workers, free plan; CORE gate passed on this URL on Tue 10 Nov 2026)
+- **Live URL:** **https://jeri-fullstuckengineer.web.app** (Firebase Hosting). The page is served by Firebase Hosting and calls the API server at https://jeri.fullstuckengineer.workers.dev (Gemini analysis, Gemini TTS, saved results). CORE gate and accessibility checks passed on this URL on Tue 10 Nov 2026, 18:26 JST.
 - **Demo email:** “Northbridge” is fictional EXAMPLE DATA. No real inboxes or personal data are used.
 - **Demo video (3:56, narrated, captioned):** [docs/video/jeri-demo-final.mp4](docs/video/jeri-demo-final.mp4). Made from screen recordings of the live site on 10 Nov 2026. Script, storyboard and edit notes: [docs/video/STORYBOARD.md](docs/video/STORYBOARD.md). Captions: [docs/video/jeri-demo-captions.srt](docs/video/jeri-demo-captions.srt).
 
@@ -56,7 +56,15 @@ node scripts/a11y-check.js http://localhost:8080/   # keyboard, screen-reader st
 
 Without a key you can run `JERI_STUB=1 npm start`: the screen then shows a red **STUB DATA** banner and uses the team’s sample file. It is never used in the demo.
 
-### Deploy (Cloudflare Workers, free) – recommended
+### Deploy the page to Firebase Hosting (free)
+
+```bash
+sh scripts/deploy-firebase.sh --new          # new free Firebase project in your account
+sh scripts/deploy-firebase.sh <PROJECT_ID>   # or an existing Firebase project you own
+```
+Builds `dist-firebase/` (the files in `public/` plus the API address) and deploys it. The API server must allow the site's origin (`*.web.app` is allowed by default).
+
+### Deploy the API server (Cloudflare Workers, free)
 
 ```bash
 npm install && npm run deploy:cf
