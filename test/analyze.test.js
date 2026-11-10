@@ -16,6 +16,11 @@ before(async () => {
     let body = "";
     req.on("data", (c) => (body += c));
     req.on("end", () => {
+      if (req.url.includes("/interactions")) { // TTS prewarm: answer with a tiny clip, not counted
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ steps: [{ type: "model_output", content: [{ type: "audio", mime_type: "audio/wav", data: "UklGRg==" }] }] }));
+        return;
+      }
       geminiCalls += 1;
       const parsed = JSON.parse(body);
       const isRetry = parsed.contents.length > 1;

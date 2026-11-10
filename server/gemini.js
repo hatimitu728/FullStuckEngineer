@@ -4,7 +4,12 @@ import { badQuotes } from "./postprocess.js";
 
 const PROMPT = readFileSync(new URL("./prompt.md", import.meta.url), "utf8");
 const API = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/models";
-const DEFAULT_MODELS = ["gemini-2.5-flash", "gemini-flash-latest"];
+// Tried in order. On "not found" or "busy" (404/429/5xx) the next model is used.
+// gemini-2.5-flash is closed to new API keys; the 3.x flash models can be briefly overloaded.
+const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3-flash-preview"];
+const PASSES = 3;              // rounds through the list when every model is busy
+const PASS_WAIT_MS = [0, 3000, 8000];
+const NEXT_MODEL_ON = new Set([404, 429, 500, 502, 503, 504]);
 
 export class GeminiError extends Error {
   constructor(message, { status = 502, detail } = {}) {
@@ -33,7 +38,22 @@ export function buildPrompt(email, { lang, readerName = "Tinish", now = new Date
   return PROMPT.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
 }
 
-async function callModel(model, contents, { signal }) {
+const CALL_TIMEOUT_MS = Number(process.env.GEMINI_CALL_TIMEOUT_MS || 50_000);
+
+async function callModel(model, contents, { signal: total }) {
+  if (total.aborted) throw new GeminiError("Jeri ran out of time waiting for Gemini.", { status: 504 });
+  const signal = AbortSignal.any([total, AbortSignal.timeout(CALL_TIMEOUT_MS)]);
+  try {
+    return await callModelOnce(model, contents, signal);
+  } catch (err) {
+    if (err.name === "TimeoutError" || err.name === "AbortError") {
+      throw new GeminiError(`Gemini ${model} did not answer within ${Math.round(CALL_TIMEOUT_MS / 1000)}s`, { status: total.aborted ? 0 : 504 });
+    }
+    throw err;
+  }
+}
+
+async function callModelOnce(model, contents, signal) {
   const key = process.env.GEMINI_API_KEY || "proxy-injected";
   const res = await fetch(`${API}/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
@@ -52,7 +72,7 @@ async function callModel(model, contents, { signal }) {
   if (!res.ok) {
     let msg = body;
     try { const j = JSON.parse(body); msg = (Array.isArray(j) ? j[0] : j)?.error?.message || body; } catch {}
-    throw new GeminiError(`Gemini ${model} returned ${res.status}: ${msg.slice(0, 300)}`, { status: res.status === 404 ? 404 : 502 });
+    throw new GeminiError(`Gemini ${model} returned ${res.status}: ${msg.slice(0, 300)}`, { status: res.status });
   }
   const json = JSON.parse(body);
   const cand = json.candidates?.[0];
@@ -76,13 +96,15 @@ let workingModel = null;
  * Returns { raw, model, attempts }.
  */
 export async function analyzeWithGemini(email, opts = {}) {
-  const models = workingModel ? [workingModel]
-    : process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL, ...DEFAULT_MODELS] : DEFAULT_MODELS;
+  const preferred = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL, ...DEFAULT_MODELS] : DEFAULT_MODELS;
+  const models = workingModel ? [workingModel, ...preferred] : preferred;
   const prompt = buildPrompt(email, opts);
   const contents = [{ role: "user", parts: [{ text: prompt }] }];
-  const signal = AbortSignal.timeout(90_000);
+  const signal = AbortSignal.timeout(Number(process.env.GEMINI_TOTAL_TIMEOUT_MS || 170_000));
 
   let lastErr;
+  for (let pass = 0; pass < PASSES; pass++) {
+  if (PASS_WAIT_MS[pass]) await new Promise((r) => setTimeout(r, PASS_WAIT_MS[pass]));
   for (const model of [...new Set(models)]) {
     try {
       let text = await callModel(model, contents, { signal });
@@ -104,8 +126,12 @@ export async function analyzeWithGemini(email, opts = {}) {
       return { raw, model, attempts };
     } catch (err) {
       lastErr = err;
-      if (err.status !== 404) break; // only fall through to the next model when the model is not found
+      if (model === workingModel) workingModel = null;
+      if (!NEXT_MODEL_ON.has(err.status)) break; // e.g. bad key (400/403): another model will not help
+      console.warn(`[gemini] ${err.message.slice(0, 120)} → trying the next model`);
     }
+  }
+  if (!NEXT_MODEL_ON.has(lastErr?.status)) break;
   }
   throw lastErr;
 }

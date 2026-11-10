@@ -1,5 +1,7 @@
 # QA record — みつ’s 26-item checklist + CORE gate
 
+**CORE ✅ on real Gemini + real Gemini TTS (Tue 10 Nov, 13:20 JST, local run, nothing mocked).** Re-run on the live URL after deploy.
+
 Automated by `scripts/core-gate.js` (CORE) and `scripts/a11y-check.js` (keyboard, screen-reader structure, axe WCAG 2.1 A/AA, text zoom).
 Status as of the build on Tue 10 Nov 2026. “Human” = still needs a person on a real device.
 
@@ -7,9 +9,9 @@ Status as of the build on Tue 10 Nov 2026. “Human” = still needs a person on
 
 | Item | Status | Note |
 |---|---|---|
-| Northbridge → **real** Gemini returns the JSON | ⏳ waiting for the API key | Stub run correctly reports FAIL (source=stub). |
+| Northbridge → **real** Gemini returns the JSON | ✅ Tue 13:20 JST | Real Gemini (gemini-3.5-flash-lite after the bigger models answered “busy”), 82 s, all quotes exact. |
 | Warning cards: both weekday mismatches + late deadline, checked in code | ✅ | 2 × wrong_weekday, 1 × deadline_after_event |
-| Listen plays **real** TTS (Gemini 3.8 Flash TTS, Cloud TTS fallback); play, pause, resume | ⏳ key | UI mechanics pass with test audio; real TTS run pending the key. |
+| Listen plays **real** TTS (Gemini 3.8 Flash TTS, Cloud TTS fallback); play, pause, resume | ✅ Tue 13:20 JST | Real gemini-3.8-flash-tts audio. Free tier = 3 TTS requests/min, so beats are made one at a time, prefetched and cached. |
 | Captions stops audio, same beat; Easy Read same facts | ✅ | |
 | Draft Dock: edit clears approval; mode switch keeps it; “Approved — not sent” | ✅ | |
 | Mode switch makes zero server calls | ✅ | |
@@ -27,7 +29,7 @@ Status as of the build on Tue 10 Nov 2026. “Human” = still needs a person on
 | 7 | Original email always available | ✅ | “View original email”, never deleted |
 | 8 | Date and deadline warnings are clear | ✅ | Warning Card: email says / our check found / meaning / next step |
 | 9 | No autoplay | ✅ | CORE gate checks no audio before Play |
-| 10 | Play, stop, resume work | ✅ (UI) / ⏳ real TTS | CORE gate |
+| 10 | Play, stop, resume work | ✅ | CORE gate, real TTS |
 | 11 | Captions: same content and order as Listen | ✅ | Both render `spokenBeats` |
 | 12 | Switching stops the audio | ✅ | CORE gate |
 | 13 | Easy Read: What / Ask / When / Risk / Next Step organised | ✅ | Plus “You can skip” |
@@ -46,3 +48,9 @@ Status as of the build on Tue 10 Nov 2026. “Human” = still needs a person on
 | 26 | Original and AI analysis clearly separate | ✅ | “AI analysis by Gemini” line vs. “Original email (never changed)” panel |
 
 axe WCAG 2.1 A/AA: 0 violations in Listen, Captions and Easy Read (stub data).
+
+## Found with real Gemini, fixed in code
+- A lighter model wrote a draft that confirmed “Wednesday, 12 November” and claimed the form was already submitted. Now: the prompt forbids it, and code adds the “which day do you mean?” question whenever a weekday is wrong.
+- Duplicate evidence quotes (E4 = E6) are merged.
+- The draft beat always says “It is not sent.”
+- gemini-2.5-flash is closed to new keys; models are tried in order and a busy (503) or slow model is skipped.

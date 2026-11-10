@@ -71,8 +71,13 @@ export function finalize(raw, email, { lang = "en", now = new Date(), model = ""
   // 1. Evidence: keep only exact copies, renumber nothing (IDs are the contract).
   const evidence = [];
   const seen = new Set();
+  const alias = {}; // duplicate quote id -> first id with the same quote
+  const byQuote = {};
   for (const e of a.evidence || []) {
     if (!e?.id || seen.has(e.id)) continue;
+    const nq = normalize(e.quote);
+    if (byQuote[nq]) { alias[e.id] = byQuote[nq]; continue; }
+    byQuote[nq] = e.id;
     const loc = locateQuote(email.text, e.quote || "");
     if (!loc) { quality.droppedEvidence.push({ id: e.id, quote: e.quote }); continue; }
     seen.add(e.id);
@@ -81,7 +86,7 @@ export function finalize(raw, email, { lang = "en", now = new Date(), model = ""
   a.evidence = evidence;
   const ok = new Set(evidence.map((e) => e.id));
   const clean = (ids) => {
-    const out = (ids || []).filter((x) => ok.has(x));
+    const out = (ids || []).map((x) => alias[x] || x).filter((x) => ok.has(x));
     quality.droppedRefs += (ids || []).length - out.length;
     return [...new Set(out)];
   };
@@ -111,8 +116,26 @@ export function finalize(raw, email, { lang = "en", now = new Date(), model = ""
     .map((r) => ({ ...r, certainty: "from_email", evidenceIds: clean(r.evidenceIds) }));
   a.risks = [...codeRisks, ...geminiRisks].map((r, i) => ({ ...r, id: `R${i + 1}` }));
 
+  // 3b. Draft guard: when a weekday is wrong, the draft must ask which day they mean (code adds it if missing).
+  a.draftReply = String(a.draftReply || "");
+  const wrong = codeRisks.filter((r) => r.type === "wrong_weekday");
+  const missing = wrong.filter((r) => !a.draftReply.includes(datesById[r.dateIds[0]]?.weekdayReal || "@@"));
+  if (missing.length) {
+    const ask = lang === "ja"
+      ? missing.map((r) => `メールには「${r.originalSays}」とありますが、${r.checkFound}`).join("\n") + "\nどちらの日のことか、ご確認いただけますでしょうか。"
+      : missing.map((r) => `The email says "${r.originalSays}", but ${r.checkFound.replace(/\.$/, "")}.`).join("\n") + "\nCould you please confirm which day you mean?";
+    const lines = a.draftReply.split("\n");
+    let at = lines.findIndex((l) => /^\s*(best|kind|warm|many thanks|thanks|thank you|regards|sincerely|yours|よろしく|敬具)/i.test(l));
+    if (at < 0) at = Math.max(0, lines.length - 2);
+    lines.splice(at, 0, ask, "");
+    a.draftReply = lines.join("\n");
+    quality.notes.push("Jeri added a question about the date to the draft, because the weekday does not match.");
+  }
+
   // 4. Spoken beats: Gemini's beats + code-made date warnings after the ask beats.
-  const beats = (a.spokenBeats || []).filter((b) => b.kind !== "risk" && b.text);
+  const draftBeat = lang === "ja" ? "返信の下書きがあります。まだ送信していません。確認してください。" : "Here is a draft reply. It is not sent. Please check it.";
+  const beats = (a.spokenBeats || []).filter((b) => b.kind !== "risk" && b.text)
+    .map((b) => (b.kind === "draft" ? { ...b, text: draftBeat } : b));
   const riskBeats = codeRisks.map((r) => ({
     kind: "risk",
     text: spokenRisk(r, datesById, lang),
@@ -123,7 +146,7 @@ export function finalize(raw, email, { lang = "en", now = new Date(), model = ""
   if (insertAt < 0) insertAt = beats.map((b) => b.kind).lastIndexOf("what");
   beats.splice(insertAt + 1, 0, ...riskBeats);
   if (!beats.some((b) => b.kind === "draft") && a.draftReply) {
-    beats.push({ kind: "draft", text: lang === "ja" ? "返信の下書きがあります。まだ送信していません。確認してください。" : "Here is a draft reply. It is not sent. Please check it.", evidenceIds: [] });
+    beats.push({ kind: "draft", text: draftBeat, evidenceIds: [] });
   }
   a.spokenBeats = beats.map((b, i) => ({ ...b, id: `S${i + 1}`, evidenceIds: clean(b.evidenceIds) }));
 

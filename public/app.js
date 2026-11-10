@@ -482,15 +482,24 @@ function setAudioStatus(msg, isError = false) {
   const s = $("#audio-status");
   if (s) { s.textContent = msg; s.classList.toggle("audio-error", isError); }
 }
-async function ensureClips() {
-  const a = current();
+// One clip per beat, fetched when needed (the next beat is prefetched while one plays).
+// The server queues TTS calls so a low rate limit never drops a beat.
+function getClip(a, i) {
   const key = `${a.emailId}:${a.lang}:${state.rate}`;
-  if (clips[key]) return clips[key];
-  setAudioStatus(t("audioLoading"));
-  serverCalls.speak += 1;
-  const r = await api("/api/speak", { beats: a.spokenBeats.map((b) => ({ id: b.id, text: b.text })), lang: a.lang, rate: state.rate });
-  clips[key] = { data: r.clips, mimes: r.mimes || {}, engine: r.engine };
-  return clips[key];
+  const c = (clips[key] ||= { data: {}, mimes: {}, engine: "", pending: {} });
+  const b = a.spokenBeats[i];
+  if (!b) return Promise.resolve(null);
+  if (c.data[b.id]) return Promise.resolve({ data: c.data[b.id], mime: c.mimes[b.id], engine: c.engine });
+  if (!c.pending[b.id]) {
+    serverCalls.speak += 1;
+    c.pending[b.id] = api("/api/speak", { beats: [{ id: b.id, text: b.text }], lang: a.lang, rate: state.rate })
+      .then((r) => {
+        c.data[b.id] = r.clips[b.id]; c.mimes[b.id] = r.mimes?.[b.id] || "audio/mpeg"; c.engine = r.engine || c.engine;
+        return { data: c.data[b.id], mime: c.mimes[b.id], engine: c.engine };
+      })
+      .finally(() => { delete c.pending[b.id]; });
+  }
+  return c.pending[b.id];
 }
 let playToken = 0;
 async function playBeat(i) {
@@ -498,10 +507,13 @@ async function playBeat(i) {
   const token = ++playToken;
   const p = per();
   try {
-    const c = await ensureClips();
+    const ready = clips[`${a.emailId}:${a.lang}:${state.rate}`]?.data[a.spokenBeats[i]?.id];
+    if (!ready) setAudioStatus(t("audioLoading"));
+    const c = await getClip(a, i);
+    getClip(a, i + 1)?.catch(() => {}); // prefetch the next beat
     if (token !== playToken || state.mode !== "listen") return;
     const b = a.spokenBeats[i];
-    audio.src = `data:${c.mimes[b.id] || "audio/mpeg"};base64,${c.data[b.id]}`;
+    audio.src = `data:${c.mime || "audio/mpeg"};base64,${c.data}`;
     audio.dataset.engine = c.engine || "";
     audio.dataset.beat = b.id;
     audio.playbackRate = 1;

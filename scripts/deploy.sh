@@ -17,7 +17,7 @@ if [ -n "${FIREBASE_API_KEY:-}" ]; then
   ENV="$ENV,FIREBASE_API_KEY=$FIREBASE_API_KEY,FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN,FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-$PROJECT_ID},FIREBASE_APP_ID=$FIREBASE_APP_ID"
 fi
 gcloud run deploy jeri --source . --region "$REGION" \
-  --allow-unauthenticated --min-instances 1 --memory 512Mi --set-env-vars "$ENV" --quiet
+  --allow-unauthenticated --min-instances 1 --max-instances 1 --timeout 600 --memory 512Mi --set-env-vars "$ENV" --quiet
 URL=$(gcloud run services describe jeri --region "$REGION" --format 'value(status.url)')
 echo ""
 echo "Live URL: $URL"

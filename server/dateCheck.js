@@ -172,7 +172,7 @@ export function checkDates(dates, { lang = "en", now = new Date() } = {}) {
             : `Deadline: ${by.asWritten} · ${ev.label}: ${ev.asWritten}`,
           checkFound: lang === "ja"
             ? `返信の期限（${by.label}）が${ev.label}より後になっています。`
-            : `The ${by.label.toLowerCase()} deadline is after the ${ev.label.toLowerCase()}.`,
+            : `The ${/deadline/i.test(by.label) ? by.label.toLowerCase() : by.label.toLowerCase() + " deadline"} is after the ${ev.label.toLowerCase()}.`,
           meaning: lang === "ja"
             ? "期限ぎりぎりに返信すると、間に合わない可能性があります。"
             : "If you wait until the deadline, the event will already be over.",

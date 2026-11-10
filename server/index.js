@@ -109,6 +109,9 @@ app.post("/api/analyze", async (req, res) => {
       const a = finalize(raw, email, { lang, now, model });
       a.meta.attempts = attempts;
       await save(key, a, { persist: email.id.endsWith("-demo") });
+      // Start making the audio now, one beat at a time, so Listen is ready sooner.
+      speakBeats(a.spokenBeats.map((b) => ({ id: b.id, text: b.text })), { lang: a.lang, rate: 1 })
+        .catch((e) => console.warn("[tts] prewarm stopped:", e.message.slice(0, 160)));
       return a;
     });
     if (joined) stats.joinedInFlight += 1;
@@ -116,7 +119,7 @@ app.post("/api/analyze", async (req, res) => {
     res.json({ analysis, cached: joined });
   } catch (err) {
     console.error("[analyze]", err.message);
-    const status = err.status && err.status >= 400 && err.status < 600 ? (err.status === 404 ? 502 : err.status) : 502;
+    const status = err.status === 413 || err.status === 400 && !(err instanceof GeminiError) ? err.status : err.status === 429 || err.status === 503 ? 503 : 502;
     res.status(status).json({
       error: err instanceof GeminiError
         ? "Jeri could not analyse this email right now. Nothing was guessed. Please try again."

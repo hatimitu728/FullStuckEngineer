@@ -29,7 +29,8 @@ Rules:
   Use short sentences. Keep every important "not", condition and exception. Write NOT in capitals.
 - "draftReply": polite, short, in the email's language ({email_language}). Sign as {reader_name}.
   If a date or weekday in the email might be wrong, politely ask which day they mean. Never pick a day for them.
-  Never say the reply was sent.
+  Never say the reply was sent. Never say the reader already did something (submitted a form, attached a file, booked a time).
+  Never confirm a specific day or time if the email's weekday and date could disagree; ask instead.
 - "confidenceNote": one short sentence if something is unclear or you are unsure; otherwise an empty string.
 
 Today: {today} (JST)

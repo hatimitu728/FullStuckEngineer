@@ -3,6 +3,7 @@
 // Fallback: Cloud Text-to-Speech standard voices.
 // TTS_ENGINE = "gemini" (default, falls back to Cloud TTS on error) | "cloud" | "gemini-only"
 import { createHash } from "node:crypto";
+import { getBlob, saveBlob } from "./store.js";
 
 const GEMINI_TTS_URL = (process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com") + "/v1beta/interactions";
 const GEMINI_TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts";
@@ -84,16 +85,60 @@ async function cloudTts(text, lang, rate) {
   return { data: audioContent, mime: "audio/mpeg", engine: "cloud-tts-standard" };
 }
 
+// Free-tier Gemini TTS allows only a few requests per minute, so calls run one at a time
+// and wait when Google says "retry in Ns". Clips are cached (memory + Firestore when configured).
+let tail = Promise.resolve();
+function enqueue(fn) { const run = tail.then(fn); tail = run.catch(() => {}); return run; }
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function retryDelayMs(message) {
+  const m = /retry in ([\d.]+)\s*s/i.exec(message) || /"retryDelay":\s*"([\d.]+)s"/.exec(message);
+  return m ? Math.ceil(Number(m[1]) * 1000) + 500 : 20_000;
+}
+
+async function geminiWithRetry(text, lang, rate) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await geminiTts(text, lang, rate);
+    } catch (err) {
+      if (!/ 429:/.test(err.message) || attempt >= 4) throw err;
+      const wait = Math.min(65_000, retryDelayMs(err.message));
+      console.warn(`[tts] rate limited, waiting ${Math.round(wait / 1000)}s (attempt ${attempt})`);
+      await sleep(wait);
+    }
+  }
+}
+
 async function synth(text, lang, rate) {
   const engine = process.env.TTS_ENGINE || "gemini";
   if (engine === "cloud") return cloudTts(text, lang, rate);
   try {
-    return await geminiTts(text, lang, rate);
+    return await enqueue(() => geminiWithRetry(text, lang, rate));
   } catch (err) {
     if (engine === "gemini-only") throw err;
-    console.warn("[tts] Gemini TTS failed, using Cloud TTS:", err.message);
-    return cloudTts(text, lang, rate);
+    console.warn("[tts] Gemini TTS failed, trying Cloud TTS:", err.message.slice(0, 160));
+    try {
+      return await cloudTts(text, lang, rate);
+    } catch (cloudErr) {
+      throw new TtsError(`${err.message.slice(0, 200)} | fallback: ${cloudErr.message.slice(0, 120)}`);
+    }
   }
+}
+
+const inflight = new Map();
+async function clipFor(text, lang, rate) {
+  const k = createHash("sha256").update(`${process.env.TTS_ENGINE || "gemini"}|${GEMINI_TTS_MODEL}|${GEMINI_VOICE}|${lang}|${rate}|${text}`).digest("hex");
+  if (cache.has(k)) return cache.get(k);
+  if (inflight.has(k)) return inflight.get(k);
+  const p = (async () => {
+    const saved = await getBlob(`tts_${k}`);
+    const c = saved || await synth(text, lang, rate);
+    if (!saved) await saveBlob(`tts_${k}`, c);
+    cache.set(k, c);
+    if (cache.size > MAX_CACHE) cache.delete(cache.keys().next().value);
+    return c;
+  })().finally(() => inflight.delete(k));
+  inflight.set(k, p);
+  return p;
 }
 
 /** beats: [{id, text}] → { clips: {[id]: base64}, mimes: {[id]: mime}, engine } */
@@ -101,14 +146,9 @@ export async function speakBeats(beats, { lang = "en", rate = 1 } = {}) {
   const r = Math.min(1.5, Math.max(0.6, Number(rate) || 1));
   const clips = {}, mimes = {};
   const engines = new Set();
-  await Promise.all(beats.map(async (b) => {
-    const k = createHash("sha256").update(`${process.env.TTS_ENGINE || "gemini"}|${lang}|${r}|${b.text}`).digest("hex");
-    if (!cache.has(k)) {
-      cache.set(k, await synth(b.text, lang, r));
-      if (cache.size > MAX_CACHE) cache.delete(cache.keys().next().value);
-    }
-    const c = cache.get(k);
+  for (const b of beats) { // in order: the queue keeps it one call at a time anyway
+    const c = await clipFor(b.text, lang, r);
     clips[b.id] = c.data; mimes[b.id] = c.mime; engines.add(c.engine);
-  }));
+  }
   return { clips, mimes, engine: [...engines].join(", ") };
 }

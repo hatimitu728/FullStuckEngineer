@@ -58,3 +58,27 @@ test("finalize ignores Gemini's own weekday claims", () => {
   assert.ok(!JSON.stringify(a.risks).includes("Monday"));
   assert.ok(!a.spokenBeats.some((b) => /Monday/.test(b.text)));
 });
+
+test("draft guard: a draft that confirms the wrong weekday gets the date question added", () => {
+  const g = structuredClone(sample);
+  g.draftReply = "Dear Aiko Sato,\n\nI am happy to confirm the interview on Wednesday, 12 November 2026.\n\nWarm regards,\nTinish";
+  const a = finalize(g, email, { now: NOW });
+  assert.match(a.draftReply, /12 November 2026 is a Thursday/);
+  assert.match(a.draftReply, /13 November 2026 is a Friday/);
+  assert.match(a.draftReply, /confirm which day you mean\?\n\nWarm regards/);
+  assert.ok(a.meta.quality.notes.some((n) => /added a question/.test(n)));
+});
+
+test("draft guard leaves a good draft alone; duplicate quotes merge; draft beat never says send", () => {
+  const g = structuredClone(sample);
+  g.evidence.push({ id: "E6", quote: g.evidence[0].quote });
+  g.asks[0].evidenceIds = ["E6"];
+  g.spokenBeats[4].text = "A draft reply is ready for you to review and send.";
+  const a = finalize(g, email, { now: NOW });
+  assert.equal(a.evidence.length, 5);
+  assert.deepEqual(a.asks[0].evidenceIds, ["E1"]);
+  assert.ok(!/review and send/.test(a.spokenBeats.at(-1).text));
+  assert.match(a.spokenBeats.at(-1).text, /not sent/);
+  // sample draft only mentions Thursday (12 Nov) – Friday (13 Nov) note is added, Thursday one is not duplicated
+  assert.equal((a.draftReply.match(/is a Thursday/g) || []).length, 1);
+});

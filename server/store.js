@@ -73,3 +73,21 @@ export function once(key, fn) {
 export function storeInfo() {
   return { firestore: Boolean(process.env.FIRESTORE_PROJECT_ID) && !firestoreError, memoryEntries: memory.size };
 }
+
+/** Small binary-ish blobs (TTS clips) by key: memory is the caller's job; this is the Firestore layer. */
+export async function getBlob(key) {
+  const d = await db();
+  if (!d) return null;
+  try {
+    const snap = await d.collection("blobs").doc(key).get();
+    return snap.exists ? JSON.parse(snap.data().json) : null;
+  } catch (e) { console.warn("[store] blob read failed:", e.message); return null; }
+}
+export async function saveBlob(key, value) {
+  const d = await db();
+  if (!d) return;
+  const json = JSON.stringify(value);
+  if (json.length > 900_000) return; // Firestore document limit is 1 MiB
+  try { await d.collection("blobs").doc(key).set({ json, savedAt: new Date() }); }
+  catch (e) { console.warn("[store] blob write failed:", e.message); }
+}

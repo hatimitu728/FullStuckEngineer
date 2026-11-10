@@ -62,9 +62,9 @@ try {
   const noAutoplay = before.paused && !before.src;
   const speakBefore = requests.filter((r) => r.includes("/api/speak")).length;
   await page.locator("#btn-play").click();
-  const speakResp = await page.waitForResponse((r) => r.url().includes("/api/speak"), { timeout: 60_000 }).catch(() => null);
+  const speakResp = await page.waitForResponse((r) => r.url().includes("/api/speak"), { timeout: 180_000 }).catch(() => null);
   const speakJson = speakResp ? await speakResp.json().catch(() => ({})) : {};
-  await page.waitForFunction(() => { const a = document.getElementById("audio"); return !a.paused && a.currentTime > 0.2; }, null, { timeout: 20_000 }).catch(() => {});
+  await page.waitForFunction(() => { const a = document.getElementById("audio"); return !a.paused && a.currentTime > 0.2; }, null, { timeout: 120_000 }).catch(() => {});
   const playing = await audioState();
   await page.locator("#btn-play").click(); // pause
   const paused = await audioState();
@@ -73,7 +73,7 @@ try {
   await page.locator("#btn-play").click(); // resume
   await page.waitForTimeout(400);
   const resumed = await audioState();
-  const realAudio = speakResp?.ok() && !speakJson.mocked && Object.keys(speakJson.clips || {}).length >= 5;
+  const realAudio = speakResp?.ok() && !speakJson.mocked && Object.keys(speakJson.clips || {}).length >= 1 && /gemini|cloud/.test(speakJson.engine || "");
   check(`3. Listen plays ${MOCK ? "MOCKED" : "real TTS (" + (speakJson.engine || "?") + ")"} audio; play, pause, resume work`,
     noAutoplay && speakBefore === 0 && (MOCK || realAudio) && !playing.paused && paused.paused && /Resume/.test(label) && !resumed.paused && resumed.beat === paused.beat && resumed.t >= paused.t,
     `noAutoplay=${noAutoplay} clips=${Object.keys(speakJson.clips || {}).length} playing=${!playing.paused} paused=${paused.paused} label="${label}" resumedSameBeat=${resumed.beat === paused.beat}`);
